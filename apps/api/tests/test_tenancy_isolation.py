@@ -54,6 +54,8 @@ ENTITY_ROUTES: list[EntityRoute] = [
     EntityRoute("POST", "/matters/{matter_id}/documents", _register_body),
     EntityRoute("GET", "/documents/{document_id}"),
     EntityRoute("GET", "/documents/{document_id}/download"),
+    EntityRoute("GET", "/documents/{document_id}/chunks"),
+    EntityRoute("POST", "/documents/{document_id}/reingest"),
     EntityRoute("DELETE", "/documents/{document_id}"),
 ]
 

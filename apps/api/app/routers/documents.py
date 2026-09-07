@@ -1,24 +1,28 @@
-"""Documents: presigned upload, registration, listing, download.
+"""Documents: presigned upload, registration, listing, download, ingestion.
 
 Upload is two calls. ``presign`` hands the browser a ticket (id, key, URL) or
 tells it the bytes already exist in this matter. ``register`` runs after the
-PUT succeeded and creates the row. Nothing is written to the database until
-the object is in storage.
+PUT succeeded, creates the row, and enqueues ingestion. Nothing is written to
+the database until the object is in storage; nothing is parsed in a request.
 """
 
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app import storage
 from app.auth.deps import CurrentPrincipal, DbSession
 from app.config import get_settings
 from app.errors import ConflictError
+from app.models.chunk import Chunk
 from app.models.document import Document, DocumentStatus
+from app.queue import enqueue_ingestion
 from app.repositories.documents import DocumentRepository
 from app.repositories.matters import MatterRepository
 from app.schemas.documents import (
+    ChunkOut,
     DocumentOut,
     DownloadOut,
     PresignRequest,
@@ -123,6 +127,7 @@ async def register_document(
         raise ConflictError("a document with this content already exists in the matter") from exc
 
     await session.refresh(document)
+    await enqueue_ingestion(document.id)
     return DocumentOut.model_validate(document)
 
 
@@ -145,9 +150,50 @@ async def download_document(
     )
 
 
+@router.get("/documents/{document_id}/chunks", response_model=list[ChunkOut])
+async def list_chunks(
+    document_id: uuid.UUID, principal: CurrentPrincipal, session: DbSession
+) -> list[ChunkOut]:
+    document = await DocumentRepository(session, principal.workspace_id).get(document_id)
+    rows = (
+        (
+            await session.execute(
+                select(Chunk)
+                .where(
+                    Chunk.document_id == document.id,
+                    Chunk.workspace_id == principal.workspace_id,
+                )
+                .order_by(Chunk.ordinal)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return [ChunkOut.model_validate(c) for c in rows]
+
+
+@router.post("/documents/{document_id}/reingest", response_model=DocumentOut)
+async def reingest_document(
+    document_id: uuid.UUID, principal: CurrentPrincipal, session: DbSession
+) -> DocumentOut:
+    """Reset a document and queue the pipeline again. Safe on any status:
+    every stage replaces what an earlier attempt wrote."""
+    document = await DocumentRepository(session, principal.workspace_id).get(document_id)
+    document.status = DocumentStatus.UPLOADED
+    document.error = None
+    await session.commit()
+    await session.refresh(document)
+    await enqueue_ingestion(document.id)
+    return DocumentOut.model_validate(document)
+
+
 @router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: uuid.UUID, principal: CurrentPrincipal, session: DbSession
 ) -> None:
-    await DocumentRepository(session, principal.workspace_id).delete(document_id)
+    document = await DocumentRepository(session, principal.workspace_id).get(document_id)
+    storage_key = document.storage_key
+    await session.delete(document)
     await session.commit()
+    if get_settings().storage_enabled:
+        storage.delete_object(storage_key)

@@ -59,6 +59,20 @@ class Settings(BaseSettings):
 
     embed_model: str = "text-embedding-3-large"
     embed_dim: int = 1536
+    embed_batch_size: int = 96
+    # "auto": OpenAI when a key is present, otherwise skip embeddings (chunks
+    # still land, documents still reach "ready"). "fake": deterministic
+    # vectors for tests. "none": always skip. "openai": always call.
+    embeddings_provider: str = "auto"
+
+    # Ingestion
+    queue_enabled: bool = True
+    ocr_enabled: bool = True
+    ocr_language: str = "eng"
+    # A page with fewer extractable characters than this is treated as scanned.
+    ocr_min_chars_per_page: int = 100
+    chunk_target_tokens: int = 800
+    chunk_max_tokens: int = 1500
 
     # Bumping this invalidates the cell cache.
     prompt_version: str = "v1"

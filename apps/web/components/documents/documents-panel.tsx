@@ -37,6 +37,12 @@ export function DocumentsPanel({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: documentsKey(matterId) }),
   })
 
+  const reingest = useMutation({
+    mutationFn: (documentId: string) =>
+      clientApi<Document>(`/documents/${documentId}/reingest`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentsKey(matterId) }),
+  })
+
   async function open(documentId: string) {
     const { url } = await clientApi<DownloadOut>(`/documents/${documentId}/download`)
     window.open(url, '_blank', 'noopener')
@@ -61,6 +67,7 @@ export function DocumentsPanel({
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 font-medium">Pages</th>
                   <th className="px-4 py-2 font-medium">Size</th>
                   <th className="px-4 py-2 font-medium">Uploaded</th>
                   <th className="px-4 py-2" />
@@ -88,10 +95,24 @@ export function DocumentsPanel({
                       <StatusBadge status={d.status} isOcr={d.is_ocr} />
                     </td>
                     <td className="px-4 py-2 tabular-nums text-[var(--muted)]">
+                      {d.page_count ?? '—'}
+                    </td>
+                    <td className="px-4 py-2 tabular-nums text-[var(--muted)]">
                       {formatBytes(d.size_bytes)}
                     </td>
                     <td className="px-4 py-2 text-[var(--muted)]">{formatDate(d.created_at)}</td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right whitespace-nowrap">
+                      {(d.status === 'failed' || d.status === 'ready') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={reingest.isPending}
+                          onClick={() => reingest.mutate(d.id)}
+                          title="Parse, chunk and embed this document again"
+                        >
+                          {d.status === 'failed' ? 'Retry' : 'Reprocess'}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"

@@ -17,6 +17,10 @@ from dataclasses import dataclass
 os.environ["ENVIRONMENT"] = "test"
 os.environ["INTERNAL_API_SECRET"] = "test-internal-secret-0123456789abcdef0123456789"
 os.environ["STORAGE_ENABLED"] = "false"
+os.environ["QUEUE_ENABLED"] = "false"
+os.environ["EMBEDDINGS_PROVIDER"] = "fake"
+# Tesseract is not a test dependency; the scanned fixture asserts the flag only.
+os.environ["OCR_ENABLED"] = "false"
 os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://legora:legora@localhost:5432/legora_test"
 )
@@ -61,11 +65,23 @@ def migrated_database() -> None:
 @pytest.fixture(autouse=True)
 async def clean_tables() -> AsyncIterator[None]:
     yield
-    async with SessionLocal() as session:
-        await session.execute(
-            text("TRUNCATE documents, matters, memberships, workspaces, users CASCADE")
-        )
-        await session.commit()
+    # One retry: on a loaded Docker Desktop host the fresh connection this
+    # needs occasionally times out, and that is not the test's fault.
+    for attempt in (1, 2):
+        try:
+            async with SessionLocal() as session:
+                await session.execute(
+                    text(
+                        "TRUNCATE chunks, document_pages, documents, matters, memberships, "
+                        "workspaces, users CASCADE"
+                    )
+                )
+                await session.commit()
+            break
+        except (TimeoutError, OSError):
+            if attempt == 2:
+                raise
+            await asyncio.sleep(2)
 
 
 @pytest.fixture
@@ -152,10 +168,11 @@ async def create_document(
     *,
     sha256: str = SHA_A,
     filename: str = "msa.pdf",
+    mime_type: str = PDF,
 ) -> uuid.UUID:
     ticket = await client.post(
         f"/matters/{matter_id}/documents/presign",
-        json={"filename": filename, "mime_type": PDF, "size_bytes": 1234, "sha256": sha256},
+        json={"filename": filename, "mime_type": mime_type, "size_bytes": 1234, "sha256": sha256},
         headers=actor.headers,
     )
     assert ticket.status_code == 200, ticket.text
@@ -168,7 +185,7 @@ async def create_document(
             "document_id": t["document_id"],
             "storage_key": t["storage_key"],
             "filename": filename,
-            "mime_type": PDF,
+            "mime_type": mime_type,
             "size_bytes": 1234,
             "sha256": sha256,
         },

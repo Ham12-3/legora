@@ -18,6 +18,10 @@ dependencies = [
     "argon2-cffi>=23.1",
     "boto3>=1.35",
     "email-validator>=2.2",
+    "pgvector>=0.3",
+    "pymupdf>=1.25",
+    "python-docx>=1.1",
+    "openai>=1.60",
 ]
 
 [dependency-groups]
@@ -53,8 +57,13 @@ warn_unreachable = true
 disallow_any_explicit = false
 
 [[tool.mypy.overrides]]
-module = ["arq.*"]
+module = ["arq.*", "pgvector.*", "docx", "docx.*"]
 ignore_missing_imports = true
+
+# PyMuPDF ships partial annotations; its Document/Page methods are untyped.
+[[tool.mypy.overrides]]
+module = ["app.ingestion.pdf", "tests.fixtures.build_fixtures"]
+disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

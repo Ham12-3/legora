@@ -4,6 +4,8 @@ Rule 6 in CLAUDE.md: nothing here calls a model. Model calls belong in workers
 or in explicitly streamed endpoints.
 """
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI
@@ -15,14 +17,23 @@ from sqlalchemy import text
 from app.config import get_settings
 from app.db import SessionLocal
 from app.errors import install_error_handlers
+from app.queue import close_pool
 from app.routers import auth, documents, matters, workspaces
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    yield
+    await close_pool()
+
 
 app = FastAPI(
     title="Legora API",
     version="0.1.0",
     description="Ingestion, retrieval, and AI orchestration for legal document review.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

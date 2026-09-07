@@ -63,3 +63,17 @@ class RegisterDocumentRequest(BaseModel):
 class DownloadOut(BaseModel):
     url: str
     expires_in: int
+
+
+class ChunkOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ordinal: int
+    section_path: str
+    page_start: int
+    page_end: int
+    char_start: int
+    char_end: int
+    token_count: int
+    text: str
