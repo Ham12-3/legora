@@ -1,0 +1,33 @@
+{
+  "name": "legora",
+  "private": true,
+  "packageManager": "pnpm@10.6.5",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:down": "docker compose down",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "uv run --directory apps/api uvicorn app.main:app --reload --port 8000",
+    "test": "pnpm test:api && pnpm test:web",
+    "test:api": "uv run --directory apps/api pytest -q",
+    "test:web": "pnpm --filter web test",
+    "lint": "pnpm lint:api && pnpm lint:web",
+    "lint:api": "uv run --directory apps/api ruff check . && uv run --directory apps/api ruff format --check . && uv run --directory apps/api mypy app",
+    "lint:web": "pnpm --filter web lint && prettier --check \"apps/web/**/*.{ts,tsx,css}\" \"packages/**/*.ts\"",
+    "format": "prettier --write \"apps/web/**/*.{ts,tsx,css}\" \"packages/**/*.ts\" && uv run --directory apps/api ruff format .",
+    "migrate": "uv run --directory apps/api alembic upgrade head",
+    "migrate:new": "uv run --directory apps/api alembic revision --autogenerate -m",
+    "eval": "echo \"eval harness lands in Phase 6\" && exit 1"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}
