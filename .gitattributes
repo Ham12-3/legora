@@ -1,0 +1,8 @@
+# Keep LF in the repo. These files are read inside Linux containers, where
+# CRLF breaks Makefiles, shell scripts, and Docker entrypoints.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary
+*.docx binary
