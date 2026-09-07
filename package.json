@@ -19,9 +19,11 @@
     "format": "prettier --write \"apps/web/**/*.{ts,tsx,css}\" \"packages/**/*.ts\" && uv run --directory apps/api ruff format .",
     "migrate": "uv run --directory apps/api alembic upgrade head",
     "migrate:new": "uv run --directory apps/api alembic revision --autogenerate -m",
-    "eval": "echo \"eval harness lands in Phase 6\" && exit 1"
+    "eval": "echo \"eval harness lands in Phase 6\" && exit 1",
+    "gen:types": "openapi-typescript http://localhost:8000/openapi.json -o packages/shared/src/api.d.ts"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.4.2"
   },
   "pnpm": {

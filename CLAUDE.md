@@ -30,6 +30,38 @@ documents as rows, questions as columns, every answer traceable to source.
    then playbook, then document content, then the questions LAST. Questions
    first turns every cell in a column into a cache miss.
 
+## How a request is authenticated
+
+Auth.js has no organisations, so tenancy is ours.
+
+1. Auth.js (Credentials provider, JWT session, no adapter) owns the browser
+   session only. `authorize()` calls the API's `POST /auth/login`, which is
+   gated by `X-Internal-Secret` so nothing but the Next.js server can reach it.
+   Users, password hashes, workspaces and memberships all live in the API.
+2. Every API call from Next.js carries a 5-minute HS256 **internal JWT**
+   (`sub` = user id, `wid` = active workspace) minted in
+   `apps/web/lib/server/token.ts` with `INTERNAL_API_SECRET`.
+3. The API verifies the signature, then `get_principal` checks a membership
+   row exists for (`sub`, `wid`). The token asserts intent; the database
+   decides. A valid token naming a workspace you are not in is a 403.
+4. Routes take the workspace from the principal, never from the path. A
+   cross-workspace id is a 404, indistinguishable from a missing row.
+5. The active workspace is the `legora_ws` cookie, set only by server actions
+   that first confirm membership. Client components never hold a token: they
+   call `/api/proxy/*`, which mints one server-side and forwards.
+
+`apps/api/tests/test_tenancy_isolation.py` parametrises over every route with
+`{matter_id}` or `{document_id}` and fails if a new one lands without an entry.
+
+## How upload works
+
+presign -> browser PUTs straight to object storage -> register. The browser
+hashes the file first; a sha256 already in the matter is reported at presign
+so duplicate bytes never move. `storage_key` is derived server-side from
+(workspace, matter, document id) and compared on register, so a client cannot
+point a row at another tenant's object. The (matter_id, sha256) unique
+constraint arbitrates races; the loser's object is deleted.
+
 ## Fixed constants
 
 - `EMBED_DIM = 1536` — `text-embedding-3-large` called with `dimensions: 1536`.

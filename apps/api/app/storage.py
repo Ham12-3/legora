@@ -6,6 +6,7 @@ the host: the API reaches MinIO at ``minio:9000`` inside the compose network,
 but the browser must PUT to an address it can resolve.
 """
 
+import contextlib
 import uuid
 from functools import lru_cache
 
@@ -71,6 +72,13 @@ def presign_download(storage_key: str, filename: str) -> str:
         },
         ExpiresIn=settings.presign_expiry_seconds,
     )
+
+
+def delete_object(storage_key: str) -> None:
+    """Best-effort removal. Used to clean up after a registration that lost a race."""
+    settings = get_settings()
+    with contextlib.suppress(ClientError):
+        internal_client().delete_object(Bucket=settings.s3_bucket, Key=storage_key)
 
 
 def object_exists(storage_key: str) -> bool:

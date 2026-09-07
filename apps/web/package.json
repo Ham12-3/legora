@@ -11,11 +11,16 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@legora/shared": "workspace:^",
+    "@tanstack/react-query": "^5.102.8",
     "clsx": "^2.1.1",
+    "jose": "^6.2.12",
     "lucide-react": "^0.469.0",
     "next": "^15.5.0",
+    "next-auth": "5.0.0-beta.32",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {

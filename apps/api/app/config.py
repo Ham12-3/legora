@@ -46,9 +46,9 @@ class Settings(BaseSettings):
     internal_token_max_age_seconds: int = 300
 
     presign_expiry_seconds: int = 900
-    # HEAD the object before registering a document row. Off in tests, which
-    # have no object store.
-    storage_verify_uploads: bool = True
+    # Whether an object store is actually reachable. Off in tests: no HEAD
+    # before registering a row, no orphan clean-up after a lost race.
+    storage_enabled: bool = True
     max_upload_bytes: int = 200 * 1024 * 1024
 
     # Never read by the web app. Never prefixed NEXT_PUBLIC_.

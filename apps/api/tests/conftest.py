@@ -16,7 +16,7 @@ from dataclasses import dataclass
 # Environment must be fixed before anything imports app.config.
 os.environ["ENVIRONMENT"] = "test"
 os.environ["INTERNAL_API_SECRET"] = "test-internal-secret-0123456789abcdef0123456789"
-os.environ["STORAGE_VERIFY_UPLOADS"] = "false"
+os.environ["STORAGE_ENABLED"] = "false"
 os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://legora:legora@localhost:5432/legora_test"
 )

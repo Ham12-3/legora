@@ -91,7 +91,8 @@ async def register_document(
             status_code=status.HTTP_400_BAD_REQUEST, detail="storage_key does not match ticket"
         )
 
-    if get_settings().storage_verify_uploads and not storage.object_exists(body.storage_key):
+    settings = get_settings()
+    if settings.storage_enabled and not storage.object_exists(body.storage_key):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="object not found in storage"
         )
@@ -115,7 +116,10 @@ async def register_document(
         await session.commit()
     except IntegrityError as exc:
         # Two presigns for the same bytes raced; the constraint is the arbiter.
+        # The loser's bytes are already in storage, so remove them.
         await session.rollback()
+        if settings.storage_enabled:
+            storage.delete_object(body.storage_key)
         raise ConflictError("a document with this content already exists in the matter") from exc
 
     await session.refresh(document)

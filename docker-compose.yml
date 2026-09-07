@@ -63,12 +63,15 @@ services:
       dockerfile: Dockerfile.dev
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
+      WATCHFILES_FORCE_POLLING: "true"
       DATABASE_URL: postgresql+asyncpg://legora:legora@postgres:5432/legora
       REDIS_URL: redis://redis:6379/0
       S3_ENDPOINT_URL: http://minio:9000
       S3_ACCESS_KEY_ID: legora
       S3_SECRET_ACCESS_KEY: legora-secret
       S3_BUCKET: legora-documents
+      S3_PUBLIC_ENDPOINT_URL: http://localhost:9000
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-internal-secret-change-me-at-least-32-bytes}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8000:8000"
@@ -86,6 +89,7 @@ services:
       dockerfile: Dockerfile.dev
     command: arq app.worker.WorkerSettings --watch app
     environment:
+      WATCHFILES_FORCE_POLLING: "true"
       DATABASE_URL: postgresql+asyncpg://legora:legora@postgres:5432/legora
       REDIS_URL: redis://redis:6379/0
       S3_ENDPOINT_URL: http://minio:9000
@@ -109,6 +113,13 @@ services:
     environment:
       API_BASE_URL: http://api:8000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      AUTH_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
+      # Bind mounts from Windows/macOS hosts do not deliver file-change
+      # events reliably; poll so edits on the host actually hot-reload.
+      WATCHPACK_POLLING: "true"
+      AUTH_SECRET: ${AUTH_SECRET:-dev-auth-secret-change-me-at-least-32-bytes-long}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-internal-secret-change-me-at-least-32-bytes}
     ports:
       - "3000:3000"
     volumes:
