@@ -6,6 +6,7 @@ class introduced in Phase 1 — see rule 1 in CLAUDE.md.
 
 from collections.abc import AsyncIterator
 
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -23,6 +24,10 @@ class Base(DeclarativeBase):
 
 def create_engine() -> AsyncEngine:
     settings = get_settings()
+    if settings.is_test:
+        # pytest-asyncio gives each test its own event loop; a pooled asyncpg
+        # connection created on one loop cannot be reused on the next.
+        return create_async_engine(settings.database_url, poolclass=NullPool)
     return create_async_engine(
         settings.database_url,
         echo=False,

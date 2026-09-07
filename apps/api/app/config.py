@@ -29,11 +29,27 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://legora:legora@localhost:5432/legora"
     redis_url: str = "redis://localhost:6379/0"
 
+    # Two endpoints: the API talks to S3 over the docker network, but the
+    # browser uploads via presigned URLs it must be able to resolve. SigV4 signs
+    # the host, so presigned URLs are generated against the public one.
     s3_endpoint_url: str = "http://localhost:9000"
+    s3_public_endpoint_url: str = "http://localhost:9000"
     s3_access_key_id: str = "legora"
     s3_secret_access_key: str = "legora-secret"
     s3_bucket: str = "legora-documents"
     s3_region: str = "us-east-1"
+
+    # Shared with the Next.js server (and only the server). Signs the internal
+    # JWT that carries (user_id, workspace_id) into every API request, and
+    # gates the /auth endpoints that run before a user has a session.
+    internal_api_secret: str = "dev-internal-secret-change-me-at-least-32-bytes"
+    internal_token_max_age_seconds: int = 300
+
+    presign_expiry_seconds: int = 900
+    # HEAD the object before registering a document row. Off in tests, which
+    # have no object store.
+    storage_verify_uploads: bool = True
+    max_upload_bytes: int = 200 * 1024 * 1024
 
     # Never read by the web app. Never prefixed NEXT_PUBLIC_.
     openai_api_key: str | None = None
@@ -50,6 +66,10 @@ class Settings(BaseSettings):
     @property
     def is_development(self) -> bool:
         return self.environment == "development"
+
+    @property
+    def is_test(self) -> bool:
+        return self.environment == "test"
 
 
 @lru_cache

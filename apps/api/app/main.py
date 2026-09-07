@@ -14,6 +14,8 @@ from sqlalchemy import text
 
 from app.config import get_settings
 from app.db import SessionLocal
+from app.errors import install_error_handlers
+from app.routers import auth, documents, matters, workspaces
 
 settings = get_settings()
 
@@ -30,6 +32,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+install_error_handlers(app)
+app.include_router(auth.router)
+app.include_router(workspaces.router)
+app.include_router(matters.router)
+app.include_router(documents.router)
 
 
 class Health(BaseModel):
