@@ -22,6 +22,8 @@ dependencies = [
     "pymupdf>=1.25",
     "python-docx>=1.1",
     "openai>=1.60",
+    "openpyxl>=3.1",
+    "python-dateutil>=2.9",
 ]
 
 [dependency-groups]
@@ -31,6 +33,8 @@ dev = [
     "mypy>=1.14",
     "ruff>=0.9",
     "boto3-stubs[s3]>=1.35",
+    "types-openpyxl>=3.1",
+    "types-python-dateutil>=2.9",
 ]
 
 [tool.uv]

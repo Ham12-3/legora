@@ -122,6 +122,27 @@ class ChunkDraft:
     bboxes: dict[str, list[list[float]]] = field(default_factory=dict)
 
 
+def bboxes_for_span(
+    pages: list[Page], char_start: int, char_end: int
+) -> dict[str, list[list[float]]]:
+    """Word boxes covering a document-global span, keyed by page number."""
+    out: dict[str, list[list[float]]] = {}
+    for page in pages:
+        page_end = page.char_offset + len(page.text)
+        if page_end < char_start or page.char_offset > char_end:
+            continue
+        local_start = char_start - page.char_offset
+        local_end = char_end - page.char_offset
+        boxes = [
+            [w.x0, w.y0, w.x1, w.y1]
+            for w in page.words
+            if w.end > local_start and w.start < local_end and (w.x1 > w.x0 or w.y1 > w.y0)
+        ]
+        if boxes:
+            out[str(page.number)] = boxes
+    return out
+
+
 def estimate_tokens(text: str) -> int:
     """Cheap, offline, deterministic. Legal English runs ~4.2 chars/token.
 

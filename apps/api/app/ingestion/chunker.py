@@ -24,7 +24,14 @@ import re
 from dataclasses import dataclass
 
 from app.ingestion.sections import SectionStack, detect_marker
-from app.ingestion.types import Block, ChunkDraft, Page, ParsedDocument, estimate_tokens
+from app.ingestion.types import (
+    Block,
+    ChunkDraft,
+    Page,
+    ParsedDocument,
+    bboxes_for_span,
+    estimate_tokens,
+)
 
 _SENTENCE_END = re.compile(r"(?<=[.;:!?])\s+(?=[A-Z(\d\"'])")
 HARD_BOUNDARY_DEPTH = 1
@@ -110,24 +117,6 @@ def _page_for_offset(pages: list[Page], offset: int) -> int:
         else:
             break
     return page_number
-
-
-def _bboxes(pages: list[Page], char_start: int, char_end: int) -> dict[str, list[list[float]]]:
-    out: dict[str, list[list[float]]] = {}
-    for page in pages:
-        page_end = page.char_offset + len(page.text)
-        if page_end < char_start or page.char_offset > char_end:
-            continue
-        local_start = char_start - page.char_offset
-        local_end = char_end - page.char_offset
-        boxes = [
-            [w.x0, w.y0, w.x1, w.y1]
-            for w in page.words
-            if w.end > local_start and w.start < local_end and (w.x1 > w.x0 or w.y1 > w.y0)
-        ]
-        if boxes:
-            out[str(page.number)] = boxes
-    return out
 
 
 def _common_path(paths: list[str]) -> str:
@@ -227,7 +216,7 @@ def chunk_document(
                 page_start=_page_for_offset(parsed.pages, start),
                 page_end=_page_for_offset(parsed.pages, max(start, end - 1)),
                 token_count=estimate_tokens(text),
-                bboxes=_bboxes(parsed.pages, start, end),
+                bboxes=bboxes_for_span(parsed.pages, start, end),
             )
         )
     return drafts

@@ -22,20 +22,46 @@ from tests.conftest import PDF, Actor, MakeActor, create_document, create_matter
 
 
 @dataclass(frozen=True)
+class Ids:
+    matter_id: uuid.UUID
+    document_id: uuid.UUID
+    review_id: uuid.UUID
+    column_id: uuid.UUID
+    run_id: uuid.UUID
+
+
+@dataclass(frozen=True)
 class EntityRoute:
     method: str
     template: str
-    body: Callable[[uuid.UUID, uuid.UUID], dict[str, object]] | None = None
+    body: Callable[[Ids], dict[str, object]] | None = None
 
-    def path(self, matter_id: uuid.UUID, document_id: uuid.UUID) -> str:
-        return self.template.format(matter_id=matter_id, document_id=document_id)
+    def path(self, ids: Ids) -> str:
+        return self.template.format(
+            matter_id=ids.matter_id,
+            document_id=ids.document_id,
+            review_id=ids.review_id,
+            column_id=ids.column_id,
+            run_id=ids.run_id,
+        )
 
 
-def _presign_body(matter_id: uuid.UUID, document_id: uuid.UUID) -> dict[str, object]:
+def _presign_body(ids: Ids) -> dict[str, object]:
     return {"filename": "x.pdf", "mime_type": PDF, "size_bytes": 10, "sha256": "b" * 64}
 
 
-def _register_body(matter_id: uuid.UUID, document_id: uuid.UUID) -> dict[str, object]:
+def _add_docs_body(ids: Ids) -> dict[str, object]:
+    return {"document_ids": [str(ids.document_id)]}
+
+
+COLUMN_BODY: dict[str, object] = {
+    "name": "Law",
+    "question": "Which law governs?",
+    "output_type": "text",
+}
+
+
+def _register_body(ids: Ids) -> dict[str, object]:
     return {
         "document_id": str(uuid.uuid4()),
         "storage_key": "irrelevant",
@@ -57,7 +83,20 @@ ENTITY_ROUTES: list[EntityRoute] = [
     EntityRoute("GET", "/documents/{document_id}/chunks"),
     EntityRoute("POST", "/documents/{document_id}/reingest"),
     EntityRoute("DELETE", "/documents/{document_id}"),
+    EntityRoute("GET", "/reviews/{review_id}"),
+    EntityRoute("DELETE", "/reviews/{review_id}"),
+    EntityRoute("POST", "/reviews/{review_id}/documents", _add_docs_body),
+    EntityRoute("DELETE", "/reviews/{review_id}/documents/{document_id}"),
+    EntityRoute("POST", "/reviews/{review_id}/columns", lambda ids: dict(COLUMN_BODY)),
+    EntityRoute("PATCH", "/reviews/{review_id}/columns/{column_id}", lambda ids: {"name": "X"}),
+    EntityRoute("DELETE", "/reviews/{review_id}/columns/{column_id}"),
+    EntityRoute("POST", "/reviews/{review_id}/run", lambda ids: {}),
+    EntityRoute("GET", "/reviews/{review_id}/runs/{run_id}"),
+    EntityRoute("GET", "/reviews/{review_id}/stream"),
+    EntityRoute("GET", "/reviews/{review_id}/export"),
 ]
+
+ENTITY_PARAMS = ("{matter_id}", "{document_id}", "{review_id}", "{column_id}", "{run_id}")
 
 
 def test_every_entity_route_is_covered() -> None:
@@ -65,34 +104,47 @@ def test_every_entity_route_is_covered() -> None:
     registered = {
         (method, route.path)
         for route in app.routes
-        if isinstance(route, APIRoute)
-        and ("{matter_id}" in route.path or "{document_id}" in route.path)
+        if isinstance(route, APIRoute) and any(p in route.path for p in ENTITY_PARAMS)
         for method in route.methods or ()
     }
     missing = registered - declared
     assert not missing, f"entity routes without an isolation test: {sorted(missing)}"
 
 
+async def make_ids(client: httpx.AsyncClient, actor: Actor, label: str) -> Ids:
+    matter_id = await create_matter(client, actor, f"Project {label}")
+    document_id = await create_document(client, actor, matter_id, sha256=label[0] * 64)
+    r = await client.post(
+        "/reviews",
+        json={"matter_id": str(matter_id), "name": "R", "document_ids": [str(document_id)]},
+        headers=actor.headers,
+    )
+    assert r.status_code == 201, r.text
+    review_id = uuid.UUID(r.json()["id"])
+    r = await client.post(f"/reviews/{review_id}/columns", json=COLUMN_BODY, headers=actor.headers)
+    assert r.status_code == 201, r.text
+    column_id = uuid.UUID(r.json()["id"])
+    r = await client.post(f"/reviews/{review_id}/run", json={}, headers=actor.headers)
+    assert r.status_code == 202, r.text
+    return Ids(matter_id, document_id, review_id, column_id, uuid.UUID(r.json()["id"]))
+
+
 @pytest.fixture
-async def tenants(
-    client: httpx.AsyncClient, make_actor: MakeActor
-) -> tuple[Actor, Actor, uuid.UUID, uuid.UUID]:
+async def tenants(client: httpx.AsyncClient, make_actor: MakeActor) -> tuple[Actor, Actor, Ids]:
     alice = await make_actor("alice")
     bob = await make_actor("bob")
-    matter_id = await create_matter(client, alice)
-    document_id = await create_document(client, alice, matter_id)
-    return alice, bob, matter_id, document_id
+    return alice, bob, await make_ids(client, alice, "a")
 
 
 @pytest.mark.parametrize("route", ENTITY_ROUTES, ids=lambda r: f"{r.method} {r.template}")
 async def test_foreign_workspace_gets_404(
     client: httpx.AsyncClient,
-    tenants: tuple[Actor, Actor, uuid.UUID, uuid.UUID],
+    tenants: tuple[Actor, Actor, Ids],
     route: EntityRoute,
 ) -> None:
-    alice, bob, matter_id, document_id = tenants
-    path = route.path(matter_id, document_id)
-    body = route.body(matter_id, document_id) if route.body else None
+    alice, bob, ids = tenants
+    path = route.path(ids)
+    body = route.body(ids) if route.body else None
 
     # Control: the owner can reach it. Without this the test could pass on a
     # route that 404s for everyone.
@@ -101,31 +153,33 @@ async def test_foreign_workspace_gets_404(
 
     # Re-create for the mutating routes the control call may have consumed.
     if route.method == "DELETE":
-        matter_id = await create_matter(client, alice, "Project Y")
-        document_id = await create_document(client, alice, matter_id, sha256="c" * 64)
-        path = route.path(matter_id, document_id)
+        ids = await make_ids(client, alice, "c")
+        path = route.path(ids)
+        body = route.body(ids) if route.body else None
 
     foreign = await client.request(route.method, path, json=body, headers=bob.headers)
     assert foreign.status_code == 404, f"{route.method} {path} -> {foreign.status_code}"
 
 
 async def test_list_endpoints_never_leak(
-    client: httpx.AsyncClient, tenants: tuple[Actor, Actor, uuid.UUID, uuid.UUID]
+    client: httpx.AsyncClient, tenants: tuple[Actor, Actor, Ids]
 ) -> None:
-    alice, bob, matter_id, _ = tenants
+    alice, bob, ids = tenants
     mine = await client.get("/matters", headers=alice.headers)
     theirs = await client.get("/matters", headers=bob.headers)
-    assert [m["id"] for m in mine.json()] == [str(matter_id)]
+    assert [m["id"] for m in mine.json()] == [str(ids.matter_id)]
     assert theirs.json() == []
+    assert (await client.get("/reviews", headers=bob.headers)).json() == []
+    assert len((await client.get("/reviews", headers=alice.headers)).json()) == 1
 
 
 async def test_token_naming_a_workspace_you_are_not_in_is_403(
-    client: httpx.AsyncClient, tenants: tuple[Actor, Actor, uuid.UUID, uuid.UUID]
+    client: httpx.AsyncClient, tenants: tuple[Actor, Actor, Ids]
 ) -> None:
-    alice, bob, matter_id, _ = tenants
+    alice, bob, ids = tenants
     # Bob forges a token claiming Alice's workspace. The signature is valid;
     # the membership row is not there.
-    r = await client.get(f"/matters/{matter_id}", headers=bob.token_for(alice.workspace_id))
+    r = await client.get(f"/matters/{ids.matter_id}", headers=bob.token_for(alice.workspace_id))
     assert r.status_code == 403
 
 

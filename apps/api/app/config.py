@@ -77,6 +77,25 @@ class Settings(BaseSettings):
     # Bumping this invalidates the cell cache.
     prompt_version: str = "v1"
 
+    # Review / extraction
+    # "auto": OpenAI when a key is present, otherwise the deterministic fake
+    # (cells are labelled model="fake" and the UI shows a demo banner).
+    llm_provider: str = "auto"
+    llm_max_concurrency: int = 4
+    llm_rpm_budget: int = 300
+    llm_tpm_budget: int = 400_000
+    llm_max_retries: int = 5
+    # Documents at or under this many (estimated) tokens are sent whole; above
+    # it, hybrid retrieval picks the context. Set by measurement, not by what
+    # the context window allows — see CLAUDE.md.
+    full_context_token_threshold: int = 12_000
+    retrieval_top_k: int = 12
+    columns_per_call: int = 6
+    # Runs with more cells than this go to the Batch API when mode is "auto".
+    batch_threshold_cells: int = 100
+    # Fuzzy citation match acceptance threshold (difflib ratio).
+    citation_fuzzy_threshold: float = 0.9
+
     @property
     def is_development(self) -> bool:
         return self.environment == "development"
