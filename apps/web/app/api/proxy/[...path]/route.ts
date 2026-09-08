@@ -19,6 +19,8 @@ const ALLOWED_PREFIXES = new Set([
   'documents',
   'reviews',
   'threads',
+  'playbooks',
+  'playbook-runs',
   'workspace',
   'workspaces',
   'me',

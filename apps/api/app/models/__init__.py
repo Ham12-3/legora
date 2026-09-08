@@ -11,6 +11,15 @@ from app.models.chunk import Chunk
 from app.models.document import Document, DocumentStatus
 from app.models.document_page import DocumentPage
 from app.models.matter import Matter
+from app.models.playbook import (
+    Finding,
+    MatchedPosition,
+    Playbook,
+    PlaybookRule,
+    PlaybookRun,
+    PlaybookRunStatus,
+    Severity,
+)
 from app.models.review import (
     Cell,
     CellCache,
@@ -38,11 +47,17 @@ __all__ = [
     "Document",
     "DocumentPage",
     "DocumentStatus",
+    "Finding",
+    "MatchedPosition",
     "Matter",
     "Membership",
     "Message",
     "MessageRole",
     "OutputType",
+    "Playbook",
+    "PlaybookRule",
+    "PlaybookRun",
+    "PlaybookRunStatus",
     "Review",
     "ReviewColumn",
     "ReviewDocument",
@@ -50,6 +65,7 @@ __all__ = [
     "Role",
     "RunMode",
     "RunStatus",
+    "Severity",
     "Thread",
     "ThreadDocument",
     "User",

@@ -160,6 +160,21 @@ final assistant turn), `error`.
    the prose; the message is `verified=false` if any marker lost its source.
    The model's own `insufficient` judgement is kept, never overridden.
 
+## How a playbook run works
+
+`apps/api/app/playbook/service.py::run_playbook`, from the `run_playbook`
+worker job. Rules are labelled `r1..rN`; the prompt is rendered system +
+playbook (static per firm, so it shares the cached prefix across documents),
+document passages via the grid's `review.context.build_context`, instruction
+LAST. Structured Outputs (`PLAYBOOK_SCHEMA`): per rule a matched position
+(preferred | fallback | unacceptable | not_addressed), severity, clause
+reference, rationale, quotes, suggested replacement language. Each quote goes
+through `review/verify.py` — the same verifier as cells and chat; there is no
+second one. A finding whose quotes all fail is stored with no citation and
+`verified=false`; a `not_addressed` finding is verified by construction.
+`GET /playbook-runs/{id}/export` renders the findings as a DOCX issues list
+that marks UNVERIFIED items in the table itself.
+
 ## Frontend notes
 
 - The review grid (`apps/web/components/review/review-grid.tsx`) keeps the

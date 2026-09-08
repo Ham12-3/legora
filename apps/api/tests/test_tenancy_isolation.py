@@ -29,6 +29,9 @@ class Ids:
     column_id: uuid.UUID
     run_id: uuid.UUID
     thread_id: uuid.UUID
+    playbook_id: uuid.UUID
+    rule_id: uuid.UUID
+    playbook_run_id: uuid.UUID
 
 
 @dataclass(frozen=True)
@@ -45,6 +48,9 @@ class EntityRoute:
             column_id=ids.column_id,
             run_id=ids.run_id,
             thread_id=ids.thread_id,
+            playbook_id=ids.playbook_id,
+            rule_id=ids.rule_id,
+            playbook_run_id=ids.playbook_run_id,
         )
 
 
@@ -55,6 +61,13 @@ def _presign_body(ids: Ids) -> dict[str, object]:
 def _add_docs_body(ids: Ids) -> dict[str, object]:
     return {"document_ids": [str(ids.document_id)]}
 
+
+RULE_BODY: dict[str, object] = {
+    "topic": "Governing law",
+    "preferred_position": "England and Wales",
+    "fallback_position": "Any EU member state",
+    "unacceptable_position": "Any other jurisdiction",
+}
 
 COLUMN_BODY: dict[str, object] = {
     "name": "Law",
@@ -101,6 +114,17 @@ ENTITY_ROUTES: list[EntityRoute] = [
     EntityRoute("PATCH", "/threads/{thread_id}/documents", _add_docs_body),
     EntityRoute("GET", "/threads/{thread_id}/messages"),
     EntityRoute("POST", "/threads/{thread_id}/messages", lambda ids: {"content": "hi"}),
+    EntityRoute("GET", "/playbooks/{playbook_id}"),
+    EntityRoute("PATCH", "/playbooks/{playbook_id}", lambda ids: {"name": "P2"}),
+    EntityRoute("DELETE", "/playbooks/{playbook_id}"),
+    EntityRoute("POST", "/playbooks/{playbook_id}/rules", lambda ids: dict(RULE_BODY)),
+    EntityRoute("PATCH", "/playbooks/{playbook_id}/rules/{rule_id}", lambda ids: {"topic": "T"}),
+    EntityRoute("DELETE", "/playbooks/{playbook_id}/rules/{rule_id}"),
+    EntityRoute(
+        "POST", "/playbooks/{playbook_id}/run", lambda ids: {"document_id": str(ids.document_id)}
+    ),
+    EntityRoute("GET", "/playbook-runs/{playbook_run_id}"),
+    EntityRoute("GET", "/playbook-runs/{playbook_run_id}/export"),
 ]
 
 ENTITY_PARAMS = (
@@ -110,6 +134,9 @@ ENTITY_PARAMS = (
     "{column_id}",
     "{run_id}",
     "{thread_id}",
+    "{playbook_id}",
+    "{rule_id}",
+    "{playbook_run_id}",
 )
 
 
@@ -147,7 +174,29 @@ async def make_ids(client: httpx.AsyncClient, actor: Actor, label: str) -> Ids:
         headers=actor.headers,
     )
     assert t.status_code == 201, t.text
-    return Ids(matter_id, document_id, review_id, column_id, run_id, uuid.UUID(t.json()["id"]))
+    pb = await client.post(
+        "/playbooks", json={"name": "P", "rules": [RULE_BODY]}, headers=actor.headers
+    )
+    assert pb.status_code == 201, pb.text
+    playbook_id = uuid.UUID(pb.json()["playbook"]["id"])
+    rule_id = uuid.UUID(pb.json()["rules"][0]["id"])
+    pr = await client.post(
+        f"/playbooks/{playbook_id}/run",
+        json={"document_id": str(document_id)},
+        headers=actor.headers,
+    )
+    assert pr.status_code == 202, pr.text
+    return Ids(
+        matter_id,
+        document_id,
+        review_id,
+        column_id,
+        run_id,
+        uuid.UUID(t.json()["id"]),
+        playbook_id,
+        rule_id,
+        uuid.UUID(pr.json()["id"]),
+    )
 
 
 @pytest.fixture

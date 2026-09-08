@@ -23,6 +23,7 @@ from app.ingestion import pipeline
 from app.ingestion.embeddings import Embedder, get_embedder
 from app.llm.client import LLMClient, get_llm_client
 from app.models.review import ReviewRun, RunStatus
+from app.playbook import service as playbook_service
 from app.review import batch, executor
 
 log = logging.getLogger(__name__)
@@ -191,6 +192,21 @@ async def poll_batches(ctx: dict[str, Any]) -> None:
                 log.warning("poll of run %s failed: %s", run.id, exc)
 
 
+async def run_playbook(ctx: dict[str, Any], run_id: str) -> None:
+    client: LLMClient = ctx["llm"]
+    embedder: Embedder | None = ctx["embedder"]
+    job_try = int(ctx.get("job_try", 1))
+    try:
+        async with SessionLocal() as session:
+            await playbook_service.run_playbook(
+                session, uuid.UUID(run_id), client=client, embedder=embedder
+            )
+    except Exception as exc:
+        if job_try < MAX_TRIES:
+            raise Retry(defer=_backoff(job_try)) from exc
+        log.error("playbook run %s: giving up: %s", run_id, exc)
+
+
 async def ping(ctx: dict[str, Any]) -> str:
     """Round-trip check that the queue is live."""
     return "pong"
@@ -223,6 +239,7 @@ class WorkerSettings:
         embed_document,
         run_cells,
         run_batch,
+        run_playbook,
     ]
     cron_jobs: ClassVar[list[Any]] = [cron(poll_batches, second=0, run_at_startup=False)]
     on_startup = startup

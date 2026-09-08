@@ -198,3 +198,100 @@ class ChatResult:
     model: str
     usage: Usage
     latency_ms: int
+
+
+# --- playbook -------------------------------------------------------------------
+
+
+class PlaybookFinding(BaseModel):
+    rule_id: str  # rule label, e.g. "r1"
+    matched_position: Literal["preferred", "fallback", "unacceptable", "not_addressed"]
+    severity: Literal["none", "low", "medium", "high"]
+    clause_reference: str = ""
+    rationale: str = ""
+    quotes: list[Quote] = Field(default_factory=list)
+    suggested_language: str = ""
+
+
+class PlaybookFindingSet(BaseModel):
+    findings: list[PlaybookFinding]
+
+
+PLAYBOOK_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "findings": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "rule_id": {"type": "string"},
+                    "matched_position": {
+                        "type": "string",
+                        "enum": ["preferred", "fallback", "unacceptable", "not_addressed"],
+                    },
+                    "severity": {"type": "string", "enum": ["none", "low", "medium", "high"]},
+                    "clause_reference": {"type": "string"},
+                    "rationale": {"type": "string"},
+                    "quotes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "chunk_id": {"type": "string"},
+                                "text": {"type": "string"},
+                            },
+                            "required": ["chunk_id", "text"],
+                            "additionalProperties": False,
+                        },
+                    },
+                    "suggested_language": {"type": "string"},
+                },
+                "required": [
+                    "rule_id",
+                    "matched_position",
+                    "severity",
+                    "clause_reference",
+                    "rationale",
+                    "quotes",
+                    "suggested_language",
+                ],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["findings"],
+    "additionalProperties": False,
+}
+
+
+@dataclass(frozen=True)
+class PlaybookRuleSpec:
+    label: str
+    topic: str
+    preferred_position: str
+    fallback_position: str = ""
+    unacceptable_position: str = ""
+
+
+@dataclass(frozen=True)
+class PlaybookRequest:
+    """One document against one playbook. Rendered system+playbook, document,
+    instruction LAST (``app.playbook.prompt``)."""
+
+    model: str
+    system_prompt: str
+    playbook_name: str
+    rules: tuple[PlaybookRuleSpec, ...]
+    document_title: str
+    outline: tuple[str, ...]
+    passages: tuple[Passage, ...]
+    metadata: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class PlaybookResult:
+    findings: PlaybookFindingSet
+    model: str
+    usage: Usage
+    latency_ms: int

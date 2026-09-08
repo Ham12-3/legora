@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from app.config import get_settings
-from app.llm.schema import ExtractionRequest
+from app.llm.schema import ExtractionRequest, PlaybookRequest
 
 PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 
@@ -26,7 +26,7 @@ def load_system_prompt(version: str | None = None) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def render_document(request: ExtractionRequest) -> str:
+def render_document(request: ExtractionRequest | PlaybookRequest) -> str:
     parts = [f"# Document: {request.document_title}"]
     if request.outline:
         parts.append("## Outline")

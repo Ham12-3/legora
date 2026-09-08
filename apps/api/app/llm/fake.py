@@ -27,6 +27,10 @@ from app.llm.schema import (
     ChatResult,
     ExtractionRequest,
     ExtractionResult,
+    PlaybookFinding,
+    PlaybookFindingSet,
+    PlaybookRequest,
+    PlaybookResult,
     Quote,
     Usage,
 )
@@ -215,6 +219,68 @@ class FakeLLMClient:
                 usage=Usage(input_tokens=sum(len(p.text) for p in request.passages) // 4),
                 latency_ms=1,
             ),
+        )
+
+    async def review_playbook(self, request: PlaybookRequest) -> PlaybookResult:
+        """Grounded fake: classify each rule by which position's words the best
+        matching sentence shares, and quote that sentence verbatim."""
+        self.playbook_calls: list[PlaybookRequest] = getattr(self, "playbook_calls", [])
+        self.playbook_calls.append(request)
+        findings: list[PlaybookFinding] = []
+        for rule in request.rules:
+            keys = _keywords(rule.topic) | _keywords(rule.preferred_position)
+            best_score = 0
+            best: tuple[str, str, str] | None = None  # label, sentence, section
+            for passage in request.passages:
+                for sentence in _SENTENCE.split(passage.text):
+                    score = len(keys & _keywords(sentence))
+                    if score > best_score and len(sentence.strip()) > 20:
+                        best_score, best = (
+                            score,
+                            (passage.label, sentence.strip(), passage.section_path),
+                        )
+            if best is None or best_score < 2:
+                findings.append(
+                    PlaybookFinding(
+                        rule_id=rule.label,
+                        matched_position="not_addressed",
+                        severity="medium",
+                        rationale=f"The document does not appear to address {rule.topic.lower()}.",
+                        suggested_language=rule.preferred_position,
+                    )
+                )
+                continue
+            label, sentence, section = best
+            words = _keywords(sentence)
+            scores = {
+                "preferred": len(words & _keywords(rule.preferred_position)),
+                "fallback": len(words & _keywords(rule.fallback_position)),
+                "unacceptable": len(words & _keywords(rule.unacceptable_position)),
+            }
+            position = max(scores, key=lambda k: (scores[k], k == "preferred"))
+            severity = {"preferred": "none", "fallback": "low", "unacceptable": "high"}[position]
+            quote = (
+                sentence
+                if not self.fabricate
+                else "The Supplier shall pay liquidated damages of ten per cent (10%) of the Fees "
+                "for each week of delay beyond the agreed delivery date."
+            )
+            findings.append(
+                PlaybookFinding(
+                    rule_id=rule.label,
+                    matched_position=position,
+                    severity=severity,
+                    clause_reference=section.split(" > ")[-1][:120] if section else "",
+                    rationale=f"The clause reads: {sentence[:160]}",
+                    quotes=[Quote(chunk_id=label, text=quote)],
+                    suggested_language="" if position == "preferred" else rule.preferred_position,
+                )
+            )
+        return PlaybookResult(
+            findings=PlaybookFindingSet(findings=findings),
+            model="fake",
+            usage=Usage(input_tokens=sum(len(p.text) for p in request.passages) // 4),
+            latency_ms=1,
         )
 
     async def batch_submit(self, items: list[BatchItem]) -> str:

@@ -23,6 +23,7 @@ from app.llm.limits import RateLimiter
 from app.llm.schema import (
     CELL_ANSWER_SCHEMA,
     CHAT_ANSWER_SCHEMA,
+    PLAYBOOK_SCHEMA,
     AnswerSet,
     BatchItem,
     BatchStatus,
@@ -31,8 +32,12 @@ from app.llm.schema import (
     ChatResult,
     ExtractionRequest,
     ExtractionResult,
+    PlaybookFindingSet,
+    PlaybookRequest,
+    PlaybookResult,
     Usage,
 )
+from app.playbook.prompt import render_playbook_messages
 from app.review.prompt import render_messages
 
 log = logging.getLogger(__name__)
@@ -52,6 +57,8 @@ class LLMClient(Protocol):
     def chat(self, request: ChatRequest) -> AsyncIterator[tuple[str, Any]]:
         """Yield (\"delta\", str) as the answer is written, then (\"done\", ChatResult)."""
         ...
+
+    async def review_playbook(self, request: PlaybookRequest) -> PlaybookResult: ...
 
 
 def _estimate_request_tokens(request: ExtractionRequest) -> int:
@@ -128,6 +135,33 @@ class OpenAIClient:
         answers = AnswerSet.model_validate_json(response.output_text)
         return ExtractionResult(
             answers=answers, model=response.model, usage=usage, latency_ms=latency_ms
+        )
+
+    # --- Playbook --------------------------------------------------------------
+
+    async def review_playbook(self, request: PlaybookRequest) -> PlaybookResult:
+        estimate = (
+            len(request.system_prompt) // 4
+            + sum(len(p.text) for p in request.passages) // 4
+            + sum(len(r.preferred_position) for r in request.rules) // 4
+            + 800
+        )
+        body: dict[str, Any] = {
+            "model": request.model,
+            "input": render_playbook_messages(request),
+            "text": _response_format("playbook_findings", PLAYBOOK_SCHEMA),
+            "metadata": request.metadata,
+        }
+        async with self._limiter.semaphore:
+            await self._limiter.acquire(estimate)
+            started = time.monotonic()
+            response = await self._client.responses.create(**body)
+        latency_ms = int((time.monotonic() - started) * 1000)
+        usage = _usage_from(response)
+        self._limiter.record_actual(usage.input_tokens + usage.output_tokens, estimate)
+        findings = PlaybookFindingSet.model_validate_json(response.output_text)
+        return PlaybookResult(
+            findings=findings, model=response.model, usage=usage, latency_ms=latency_ms
         )
 
     # --- Assistant -------------------------------------------------------------

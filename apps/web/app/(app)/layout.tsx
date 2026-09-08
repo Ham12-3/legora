@@ -25,6 +25,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <Link href="/matters" className="hover:underline underline-offset-4">
                 Matters
               </Link>
+              <Link href="/playbooks" className="hover:underline underline-offset-4">
+                Playbooks
+              </Link>
               <Link href="/members" className="hover:underline underline-offset-4">
                 Members
               </Link>

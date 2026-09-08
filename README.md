@@ -61,6 +61,14 @@ When retrieval finds nothing relevant the assistant says so and no model is
 called; an answer whose quotes could not be located in the source is marked
 unverified.
 
+## Playbooks
+
+Under Playbooks, define rules: a topic with your preferred, fallback, and
+unacceptable positions. Run a playbook against a ready document to get one
+finding per rule — which position the clause takes, severity, the cited clause
+(click to open the page), and proposed replacement language — and export the
+findings as a DOCX issues list.
+
 ## Ingestion
 
 Uploading a document enqueues `parse -> chunk -> embed` on the arq worker;
