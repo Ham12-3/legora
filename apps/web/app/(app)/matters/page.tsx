@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
+import { LocalTime } from '@/components/local-time'
 import { NewMatterForm } from '@/components/matters/new-matter-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate } from '@/lib/format'
 import { workspaceApi } from '@/lib/server/api'
 import type { Matter } from '@/lib/types'
 
@@ -41,7 +41,9 @@ export default async function MattersPage() {
                     <p>
                       {m.document_count} {m.document_count === 1 ? 'document' : 'documents'}
                     </p>
-                    <p>{formatDate(m.created_at)}</p>
+                    <p>
+                      <LocalTime iso={m.created_at} />
+                    </p>
                   </div>
                 </Link>
               </li>

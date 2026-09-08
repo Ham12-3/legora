@@ -4,11 +4,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
+import { LocalTime } from '@/components/local-time'
 import { IN_PROGRESS, StatusBadge } from '@/components/documents/status-badge'
 import { Uploader } from '@/components/documents/uploader'
 import { Button } from '@/components/ui/button'
 import { clientApi } from '@/lib/client-api'
-import { formatBytes, formatDate } from '@/lib/format'
+import { formatBytes } from '@/lib/format'
 import type { Document, DownloadOut } from '@/lib/types'
 
 export function documentsKey(matterId: string) {
@@ -117,7 +118,9 @@ export function DocumentsPanel({
                     <td className="px-4 py-2 tabular-nums text-[var(--muted)]">
                       {formatBytes(d.size_bytes)}
                     </td>
-                    <td className="px-4 py-2 text-[var(--muted)]">{formatDate(d.created_at)}</td>
+                    <td className="px-4 py-2 text-[var(--muted)]">
+                      <LocalTime iso={d.created_at} />
+                    </td>
                     <td className="px-4 py-2 text-right whitespace-nowrap">
                       {/* Offered in every state, including the in-flight ones.
                           A worker that dies mid-job leaves a document in

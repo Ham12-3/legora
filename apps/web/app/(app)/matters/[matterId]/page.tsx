@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { LocalTime } from '@/components/local-time'
 import { DocumentsPanel } from '@/components/documents/documents-panel'
 import { NewThreadForm } from '@/components/assistant/new-thread-form'
 import { NewReviewForm } from '@/components/review/new-review-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ApiError } from '@/lib/api'
-import { formatDate } from '@/lib/format'
 import { workspaceApi } from '@/lib/server/api'
 import type { Document, Matter, Review, Thread } from '@/lib/types'
 
@@ -40,7 +40,7 @@ export default async function MatterPage({ params }: Props) {
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{matter.name}</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
           {matter.description ? `${matter.description} · ` : ''}Created{' '}
-          {formatDate(matter.created_at)}
+          <LocalTime iso={matter.created_at} />
         </p>
       </div>
 
@@ -64,7 +64,8 @@ export default async function MatterPage({ params }: Props) {
                   >
                     <span className="font-medium">{r.name}</span>
                     <span className="text-xs text-[var(--muted)]">
-                      {r.document_count} docs × {r.column_count} cols · {formatDate(r.created_at)}
+                      {r.document_count} docs × {r.column_count} cols ·{' '}
+                      <LocalTime iso={r.created_at} />
                     </span>
                   </Link>
                 </li>
@@ -109,7 +110,7 @@ export default async function MatterPage({ params }: Props) {
                     <span className="truncate font-medium">{t.title}</span>
                     <span className="shrink-0 text-xs text-[var(--muted)]">
                       {t.document_count} docs · {t.message_count} messages ·{' '}
-                      {formatDate(t.created_at)}
+                      <LocalTime iso={t.created_at} />
                     </span>
                   </Link>
                 </li>

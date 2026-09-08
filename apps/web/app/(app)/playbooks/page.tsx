@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
+import { LocalTime } from '@/components/local-time'
 import { NewPlaybookForm } from '@/components/playbook/new-playbook-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate } from '@/lib/format'
 import { workspaceApi } from '@/lib/server/api'
 import type { Playbook } from '@/lib/types'
 
@@ -39,7 +39,9 @@ export default async function PlaybooksPage() {
                     <p>
                       {p.rule_count} {p.rule_count === 1 ? 'rule' : 'rules'}
                     </p>
-                    <p>{formatDate(p.created_at)}</p>
+                    <p>
+                      <LocalTime iso={p.created_at} />
+                    </p>
                   </div>
                 </Link>
               </li>
