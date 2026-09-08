@@ -102,17 +102,21 @@ export function DocumentsPanel({
                     </td>
                     <td className="px-4 py-2 text-[var(--muted)]">{formatDate(d.created_at)}</td>
                     <td className="px-4 py-2 text-right whitespace-nowrap">
-                      {(d.status === 'failed' || d.status === 'ready') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={reingest.isPending}
-                          onClick={() => reingest.mutate(d.id)}
-                          title="Parse, chunk and embed this document again"
-                        >
-                          {d.status === 'failed' ? 'Retry' : 'Reprocess'}
-                        </Button>
-                      )}
+                      {/* Offered in every state, including the in-flight ones.
+                          A worker that dies mid-job leaves a document in
+                          parsing/chunking/embedding for good — arq does not
+                          resume it — and without this the row has no way out.
+                          Reingesting is safe at any point: every stage
+                          replaces what an earlier attempt wrote. */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={reingest.isPending}
+                        onClick={() => reingest.mutate(d.id)}
+                        title="Parse, chunk and embed this document again"
+                      >
+                        {d.status === 'failed' ? 'Retry' : 'Reprocess'}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
