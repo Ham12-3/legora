@@ -70,9 +70,11 @@ def write_results(summary: EvalSummary, per_question: list[QuestionStats]) -> tu
     payload["per_question"] = [
         {**asdict(q), "accuracy": round(q.accuracy, 4)} for q in per_question
     ]
-    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    md_path.write_text(render_markdown(summary, per_question), encoding="utf-8")
-    (RESULTS_DIR / "latest.md").write_text(md_path.read_text(encoding="utf-8"), encoding="utf-8")
+    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8", newline="\n")
+    md_path.write_text(render_markdown(summary, per_question), encoding="utf-8", newline="\n")
+    (RESULTS_DIR / "latest.md").write_text(
+        md_path.read_text(encoding="utf-8"), encoding="utf-8", newline="\n"
+    )
     return json_path, md_path
 
 

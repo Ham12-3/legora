@@ -435,10 +435,14 @@ def main() -> None:
         write_pdf(HERE / f"{spec.slug}.pdf", body)
         expected[f"{spec.slug}.pdf"] = {q["key"]: spec.expected[q["key"]] for q in QUESTIONS}
     (HERE / "questions.yaml").write_text(
-        yaml.safe_dump(QUESTIONS, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        yaml.safe_dump(QUESTIONS, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+        newline="\n",
     )
     (HERE / "expected.yaml").write_text(
-        yaml.safe_dump(expected, sort_keys=True, allow_unicode=True), encoding="utf-8"
+        yaml.safe_dump(expected, sort_keys=True, allow_unicode=True),
+        encoding="utf-8",
+        newline="\n",
     )
     print(f"wrote {len(expected)} contracts, {len(QUESTIONS)} questions to {HERE}")
 
