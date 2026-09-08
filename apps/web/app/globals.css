@@ -26,3 +26,105 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* ---------------------------------------------------------------------------
+ * Landing page.
+ *
+ * Dark regardless of the visitor's colour scheme, scoped to .landing-root so
+ * none of it reaches the signed-in product. Amber is reserved for one thing —
+ * an unverified answer — so it means something wherever it appears.
+ * ------------------------------------------------------------------------- */
+
+.landing-root {
+  --l-bg: #08090b;
+  --l-fg: #edeef0;
+  --l-dim: #9ba1aa;
+  --l-line: #22252b;
+  --l-panel: #0d0f13;
+  --l-amber: #e0a33c;
+
+  color-scheme: dark;
+  background: var(--l-bg);
+  color: var(--l-fg);
+}
+
+body:has(.landing-root) {
+  background: #08090b;
+}
+
+.landing-header {
+  border-bottom: 1px solid var(--l-line);
+  background: var(--l-bg);
+}
+
+/* Fades the canvas out behind the copy so the text never fights it. */
+.landing-veil {
+  background:
+    linear-gradient(
+      to right,
+      var(--l-bg) 0%,
+      color-mix(in srgb, var(--l-bg) 70%, transparent) 46%,
+      transparent 82%
+    ),
+    linear-gradient(to bottom, transparent 55%, var(--l-bg) 100%);
+}
+
+.landing-btn,
+.landing-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.landing-btn {
+  background: var(--l-fg);
+  color: #08090b;
+}
+.landing-btn:hover {
+  background: #ffffff;
+}
+
+.landing-btn-ghost {
+  border: 1px solid var(--l-line);
+  color: var(--l-fg);
+}
+.landing-btn-ghost:hover {
+  border-color: #343841;
+}
+
+.landing-btn-lg {
+  padding: 0.6rem 1.15rem;
+  font-size: 0.9rem;
+}
+
+.landing-panel {
+  border: 1px solid var(--l-line);
+  background: var(--l-panel);
+}
+
+/* Cells arrive one at a time, the way they do over SSE. */
+.landing-cell {
+  animation: landing-rise 260ms ease-out both;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-cell {
+    animation: none;
+  }
+}

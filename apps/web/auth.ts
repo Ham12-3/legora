@@ -19,7 +19,10 @@ declare module 'next-auth' {
   }
 }
 
+// Prefixes anyone may reach. "/" is matched exactly, not as a prefix, or it
+// would open the whole app.
 const PUBLIC_PATHS = ['/login', '/register']
+const PUBLIC_EXACT = ['/']
 
 type ApiUser = { id: string; email: string; name: string }
 
@@ -65,7 +68,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl
-      const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+      const isPublic =
+        PUBLIC_EXACT.includes(pathname) || PUBLIC_PATHS.some((p) => pathname.startsWith(p))
       if (isPublic) return true
       return Boolean(auth?.user)
     },
