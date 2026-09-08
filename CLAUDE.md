@@ -175,6 +175,23 @@ second one. A finding whose quotes all fail is stored with no citation and
 `GET /playbook-runs/{id}/export` renders the findings as a DOCX issues list
 that marks UNVERIFIED items in the table itself.
 
+## Evaluation
+
+`make eval` (`apps/api/eval/run_eval.py`) ingests the golden set in a
+dedicated `legora_eval` database, runs the 15 standard questions over every
+document with the configured model, scores each cell against
+`tests/eval/golden/expected.yaml` (`eval/scoring.py`), and writes
+`eval/results/<stamp>_<prompt>_<model>.{json,md}` plus `latest.md`. Commit
+the results with the change that produced them. Headline numbers and targets:
+citation verification rate >= 95%, hallucination rate on "not present"
+questions <= 2%, cost per cell <= $0.02.
+
+The golden contracts are generated (`tests/eval/golden/build_golden.py`) so
+every answer, including which questions have no answer, is known exactly.
+They do not exercise real-world formatting; add real public contracts (SEC
+EDGAR EX-10 exhibits) with hand-written answers before trusting the numbers
+for a pilot. Never change a prompt without running the eval before and after.
+
 ## Frontend notes
 
 - The review grid (`apps/web/components/review/review-grid.tsx`) keeps the

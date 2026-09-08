@@ -41,5 +41,7 @@ migrate:
 	uv run --directory apps/api alembic upgrade head
 
 eval:
-	@echo "eval harness lands in Phase 6"
-	@exit 1
+	uv run --directory apps/api python -m eval.run_eval
+
+eval-golden:
+	uv run --directory apps/api python tests/eval/golden/build_golden.py

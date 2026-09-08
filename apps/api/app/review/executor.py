@@ -91,6 +91,9 @@ async def _get_or_create_cells(
                 document_id=document.id,
                 column_id=column.id,
                 status=CellStatus.PENDING,
+                # Mark the collection loaded: a fresh row is serialised after
+                # commit and an async session cannot lazy-load it.
+                citations=[],
             )
             session.add(cell)
             by_column[column.id] = cell

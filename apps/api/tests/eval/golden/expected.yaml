@@ -1,0 +1,320 @@
+golden_01.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'yes'
+  confidentiality_term: three (3) years
+  data_protection: 'yes'
+  dispute_resolution: the courts of England and Wales
+  exclusivity: not present
+  governing_law: England and Wales
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: vest in Customer
+  liability_cap: '100'
+  non_compete: not present
+  payment_terms: thirty (30) days
+  term: one (1) years
+  termination_for_convenience: 'yes'
+golden_02.pdf:
+  assignment: 'yes'
+  auto_renewal: 'no'
+  change_of_control: not present
+  confidentiality_term: five (5) years
+  data_protection: 'yes'
+  dispute_resolution: arbitration
+  exclusivity: not present
+  governing_law: the State of New York
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: not present
+  liability_cap: '125'
+  non_compete: 'yes'
+  payment_terms: forty-five (45) days
+  term: two (2) years
+  termination_for_convenience: 'yes'
+golden_03.pdf:
+  assignment: not present
+  auto_renewal: 'yes'
+  change_of_control: not present
+  confidentiality_term: not present
+  data_protection: 'yes'
+  dispute_resolution: the Scottish courts
+  exclusivity: 'yes'
+  governing_law: Scotland
+  indemnity: not present
+  ip_ownership: Supplier retains
+  liability_cap: '150'
+  non_compete: not present
+  payment_terms: sixty (60) days
+  term: three (3) years
+  termination_for_convenience: not present
+golden_04.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'no'
+  confidentiality_term: five (5) years
+  data_protection: not present
+  dispute_resolution: expert
+  exclusivity: 'yes'
+  governing_law: Ireland
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: vest in Customer
+  liability_cap: not present
+  non_compete: not present
+  payment_terms: fourteen (14) days
+  term: five (5) years
+  termination_for_convenience: 'yes'
+golden_05.pdf:
+  assignment: 'no'
+  auto_renewal: not present
+  change_of_control: 'yes'
+  confidentiality_term: two (2) years
+  data_protection: 'yes'
+  dispute_resolution: the courts of Singapore
+  exclusivity: 'no'
+  governing_law: Singapore
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: Supplier retains
+  liability_cap: '200'
+  non_compete: 'yes'
+  payment_terms: not present
+  term: not present
+  termination_for_convenience: not present
+golden_06.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'yes'
+  confidentiality_term: three (3) years
+  data_protection: 'yes'
+  dispute_resolution: the courts of England and Wales
+  exclusivity: not present
+  governing_law: England and Wales
+  indemnity: not present
+  ip_ownership: vest in Customer
+  liability_cap: '100'
+  non_compete: not present
+  payment_terms: thirty (30) days
+  term: one (1) years
+  termination_for_convenience: 'yes'
+golden_07.pdf:
+  assignment: 'yes'
+  auto_renewal: 'no'
+  change_of_control: not present
+  confidentiality_term: five (5) years
+  data_protection: 'yes'
+  dispute_resolution: arbitration
+  exclusivity: not present
+  governing_law: the State of New York
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: not present
+  liability_cap: '125'
+  non_compete: 'yes'
+  payment_terms: forty-five (45) days
+  term: two (2) years
+  termination_for_convenience: 'yes'
+golden_08.pdf:
+  assignment: not present
+  auto_renewal: 'yes'
+  change_of_control: not present
+  confidentiality_term: not present
+  data_protection: not present
+  dispute_resolution: the Scottish courts
+  exclusivity: 'yes'
+  governing_law: Scotland
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: Supplier retains
+  liability_cap: '150'
+  non_compete: not present
+  payment_terms: sixty (60) days
+  term: three (3) years
+  termination_for_convenience: not present
+golden_09.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'no'
+  confidentiality_term: five (5) years
+  data_protection: 'yes'
+  dispute_resolution: expert
+  exclusivity: 'yes'
+  governing_law: Ireland
+  indemnity: not present
+  ip_ownership: vest in Customer
+  liability_cap: not present
+  non_compete: not present
+  payment_terms: fourteen (14) days
+  term: five (5) years
+  termination_for_convenience: 'yes'
+golden_10.pdf:
+  assignment: 'no'
+  auto_renewal: not present
+  change_of_control: 'yes'
+  confidentiality_term: two (2) years
+  data_protection: 'yes'
+  dispute_resolution: the courts of Singapore
+  exclusivity: 'no'
+  governing_law: Singapore
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: Supplier retains
+  liability_cap: '200'
+  non_compete: 'yes'
+  payment_terms: not present
+  term: not present
+  termination_for_convenience: not present
+golden_11.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'yes'
+  confidentiality_term: three (3) years
+  data_protection: 'yes'
+  dispute_resolution: the courts of England and Wales
+  exclusivity: not present
+  governing_law: England and Wales
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: vest in Customer
+  liability_cap: '100'
+  non_compete: not present
+  payment_terms: thirty (30) days
+  term: one (1) years
+  termination_for_convenience: 'yes'
+golden_12.pdf:
+  assignment: 'yes'
+  auto_renewal: 'no'
+  change_of_control: not present
+  confidentiality_term: five (5) years
+  data_protection: not present
+  dispute_resolution: arbitration
+  exclusivity: not present
+  governing_law: the State of New York
+  indemnity: not present
+  ip_ownership: not present
+  liability_cap: '125'
+  non_compete: 'yes'
+  payment_terms: forty-five (45) days
+  term: two (2) years
+  termination_for_convenience: 'yes'
+golden_13.pdf:
+  assignment: not present
+  auto_renewal: 'yes'
+  change_of_control: not present
+  confidentiality_term: not present
+  data_protection: 'yes'
+  dispute_resolution: the Scottish courts
+  exclusivity: 'yes'
+  governing_law: Scotland
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: Supplier retains
+  liability_cap: '150'
+  non_compete: not present
+  payment_terms: sixty (60) days
+  term: three (3) years
+  termination_for_convenience: not present
+golden_14.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'no'
+  confidentiality_term: five (5) years
+  data_protection: 'yes'
+  dispute_resolution: expert
+  exclusivity: 'yes'
+  governing_law: Ireland
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: vest in Customer
+  liability_cap: not present
+  non_compete: not present
+  payment_terms: fourteen (14) days
+  term: five (5) years
+  termination_for_convenience: 'yes'
+golden_15.pdf:
+  assignment: 'no'
+  auto_renewal: not present
+  change_of_control: 'yes'
+  confidentiality_term: two (2) years
+  data_protection: 'yes'
+  dispute_resolution: the courts of Singapore
+  exclusivity: 'no'
+  governing_law: Singapore
+  indemnity: not present
+  ip_ownership: Supplier retains
+  liability_cap: '200'
+  non_compete: 'yes'
+  payment_terms: not present
+  term: not present
+  termination_for_convenience: not present
+golden_16.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'yes'
+  confidentiality_term: three (3) years
+  data_protection: not present
+  dispute_resolution: the courts of England and Wales
+  exclusivity: not present
+  governing_law: England and Wales
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: vest in Customer
+  liability_cap: '100'
+  non_compete: not present
+  payment_terms: thirty (30) days
+  term: one (1) years
+  termination_for_convenience: 'yes'
+golden_17.pdf:
+  assignment: 'yes'
+  auto_renewal: 'no'
+  change_of_control: not present
+  confidentiality_term: five (5) years
+  data_protection: 'yes'
+  dispute_resolution: arbitration
+  exclusivity: not present
+  governing_law: the State of New York
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: not present
+  liability_cap: '125'
+  non_compete: 'yes'
+  payment_terms: forty-five (45) days
+  term: two (2) years
+  termination_for_convenience: 'yes'
+golden_18.pdf:
+  assignment: not present
+  auto_renewal: 'yes'
+  change_of_control: not present
+  confidentiality_term: not present
+  data_protection: 'yes'
+  dispute_resolution: the Scottish courts
+  exclusivity: 'yes'
+  governing_law: Scotland
+  indemnity: not present
+  ip_ownership: Supplier retains
+  liability_cap: '150'
+  non_compete: not present
+  payment_terms: sixty (60) days
+  term: three (3) years
+  termination_for_convenience: not present
+golden_19.pdf:
+  assignment: 'no'
+  auto_renewal: 'yes'
+  change_of_control: 'no'
+  confidentiality_term: five (5) years
+  data_protection: 'yes'
+  dispute_resolution: expert
+  exclusivity: 'yes'
+  governing_law: Ireland
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: vest in Customer
+  liability_cap: not present
+  non_compete: not present
+  payment_terms: fourteen (14) days
+  term: five (5) years
+  termination_for_convenience: 'yes'
+golden_20.pdf:
+  assignment: 'no'
+  auto_renewal: not present
+  change_of_control: 'yes'
+  confidentiality_term: two (2) years
+  data_protection: not present
+  dispute_resolution: the courts of Singapore
+  exclusivity: 'no'
+  governing_law: Singapore
+  indemnity: Supplier shall indemnify Customer
+  ip_ownership: Supplier retains
+  liability_cap: '200'
+  non_compete: 'yes'
+  payment_terms: not present
+  term: not present
+  termination_for_convenience: not present

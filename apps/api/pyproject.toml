@@ -24,6 +24,7 @@ dependencies = [
     "openai>=1.60",
     "openpyxl>=3.1",
     "python-dateutil>=2.9",
+    "pyyaml>=6.0",
 ]
 
 [dependency-groups]
@@ -35,6 +36,7 @@ dev = [
     "boto3-stubs[s3]>=1.35",
     "types-openpyxl>=3.1",
     "types-python-dateutil>=2.9",
+    "types-PyYAML>=6.0",
 ]
 
 [tool.uv]
@@ -71,6 +73,6 @@ disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["tests", "app"]
+testpaths = ["tests", "app", "eval"]
 asyncio_mode = "auto"
 addopts = "-ra"

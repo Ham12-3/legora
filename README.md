@@ -69,6 +69,18 @@ finding per rule — which position the clause takes, severity, the cited clause
 (click to open the page), and proposed replacement language — and export the
 findings as a DOCX issues list.
 
+## Evaluation
+
+```bash
+pnpm eval                 # or: make eval
+```
+
+Runs the 15 standard questions over the 20-contract golden set in a separate
+`legora_eval` database and writes accuracy per question, citation verification
+rate, hallucination rate, p50/p95 latency and cost per document to
+`apps/api/eval/results/`. Without an API key the placeholder model runs, which
+measures the harness rather than extraction quality.
+
 ## Ingestion
 
 Uploading a document enqueues `parse -> chunk -> embed` on the arq worker;
