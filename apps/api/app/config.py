@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     chunk_max_tokens: int = 1500
 
     # Bumping this invalidates the cell cache.
-    prompt_version: str = "v1"
+    prompt_version: str = "v2"
 
     # Review / extraction
     # "auto": OpenAI when a key is present, otherwise the deterministic fake

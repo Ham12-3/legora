@@ -11,6 +11,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from app.config import get_settings
 from app.db import SessionLocal
 from app.ingestion import pipeline
 from app.ingestion.embeddings import FakeEmbedder
@@ -162,7 +163,10 @@ async def test_grid_fills_with_verified_cells(
             assert cit["page"] >= 1
             assert cit["char_end"] > cit["char_start"]
             assert cit["bboxes"], "PDF citations must carry boxes for the viewer"
-    assert all(c["model"] == "fake" and c["prompt_version"] == "v1" for c in cells)
+    # The configured version, not a literal: bumping PROMPT_VERSION is a
+    # routine change and should not fail a test about recording it.
+    version = get_settings().prompt_version
+    assert all(c["model"] == "fake" and c["prompt_version"] == version for c in cells)
 
     by_col = {c["column_id"]: c for c in cells if c["document_id"] == str(doc_ids[0])}
     boolean_cell = by_col[str(col_ids[2])]
@@ -258,8 +262,6 @@ async def test_batch_mode_uses_the_same_verification_path(
 async def test_auto_mode_picks_batch_for_large_runs(
     client: httpx.AsyncClient, make_actor: MakeActor, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from app.config import get_settings
-
     monkeypatch.setattr(get_settings(), "batch_threshold_cells", 5)
     alice = await make_actor("alice")
     review_id, _, _ = await make_review(client, alice, ["msa.pdf"])
