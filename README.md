@@ -110,3 +110,46 @@ Next.js reads `apps/web/.env.local`, not the repo-root `.env`:
 cp .env apps/web/.env.local
 pnpm dev:web
 ```
+
+## Deploying
+
+`docker-compose.yml` is for development only: it bind-mounts your working tree
+and runs both apps with a reloader. `docker-compose.prod.yml` builds the
+production images instead — dev dependencies excluded, lockfiles enforced, no
+reloader, and both services running as a non-root user.
+
+```bash
+cp .env.example .env       # fill in every value under "production only"
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+None of the secrets have defaults there. A missing one stops the stack with the
+name of the variable rather than booting with a known password.
+
+Migrations run once, in their own container; the API and worker wait for it to
+exit cleanly, so replicas never race to migrate on boot.
+
+Postgres, Redis and MinIO are included so a single host works out of the box.
+Point `DATABASE_URL`, `REDIS_URL` and the `S3_*` variables at managed services
+and you can delete all three, along with their volumes.
+
+Two things to get right in front of a real domain:
+
+- `S3_PUBLIC_ENDPOINT_URL` must be an address the *browser* can reach, because
+  uploads are presigned and SigV4 signs the host. Behind a reverse proxy,
+  terminate TLS at the proxy and set this to the public name.
+- Only the web app publishes a port. The API is reached server-to-server inside
+  the network, and everything the browser needs goes through `/api/proxy/*`.
+
+`OPENAI_API_KEY` is passed to `api` and `worker` and deliberately not to `web`.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request: ruff, mypy and
+the full pytest suite against a real `pgvector/pgvector:pg17` service, then
+tsc, eslint, prettier, vitest and a production `next build`. No API key is
+needed — the tests use the fake provider, and storage, the queue and OCR are
+off.
+
+The API suite truncates shared tables between tests, so it runs on one runner.
+Splitting it across parallel jobs would have them wipe each other's rows.

@@ -7,3 +7,11 @@ node_modules
 .git
 __pycache__
 **/__pycache__
+
+# Secrets never enter a build context. The web image builds from the repo
+# root, so an un-ignored .env would be copied into the builder layer even
+# though the final stage does not keep it.
+.env
+.env.*
+**/.env
+**/.env.*

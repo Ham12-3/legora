@@ -214,6 +214,32 @@ for a pilot. Never change a prompt without running the eval before and after.
   (`lib/sse.ts`) because EventSource cannot POST. `[n]` markers render as
   chips bound to verified citations; a marker with no citation stays plain.
 
+## Shipping it
+
+`docker-compose.yml` is development only. `docker-compose.prod.yml` builds
+`apps/api/Dockerfile` (api and worker, same image, different command) and
+`apps/web/Dockerfile`, runs migrations once in their own container before
+either starts, and has no default for any secret: a missing one stops the
+stack by name.
+
+- The production image installs no dev group, so nothing under `app/` may
+  import a dev-only package at runtime. `storage.py` keeps its `S3Client`
+  import under `TYPE_CHECKING` for exactly this reason, and the annotations
+  stay strings. A build is the only thing that catches this; `uv run` will not.
+- `next.config.ts` sets `output: 'standalone'`. The standalone tree does not
+  include `.next/static` or `public/`, so the Dockerfile copies both. `public/`
+  is where `copy-pdf-worker.mjs` puts pdf.js.
+- The web image builds from the repo root, so `.dockerignore` excludes every
+  `.env`. Without that, the key ends up in a builder layer.
+- Only `web` publishes a port, plus MinIO because presigned uploads are signed
+  against a host the browser has to reach.
+
+`.github/workflows/ci.yml` runs ruff, mypy and pytest against a real
+`pgvector/pgvector:pg17` service, then tsc, eslint, prettier, vitest and a
+production `next build`. No API key: the tests use the fake provider. The API
+suite truncates shared tables between tests, so it cannot be split across
+parallel runners.
+
 ## Fixed constants
 
 - `EMBED_DIM = 1536` — `text-embedding-3-large` called with `dimensions: 1536`.

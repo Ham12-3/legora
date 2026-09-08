@@ -9,16 +9,22 @@ but the browser must PUT to an address it can resolve.
 import contextlib
 import uuid
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from mypy_boto3_s3 import S3Client
 
 from app.config import get_settings
 
+if TYPE_CHECKING:
+    # boto3-stubs is a dev dependency. Importing it at runtime works in
+    # development and fails in the production image, which installs no dev
+    # group, so this annotation has to stay a string.
+    from mypy_boto3_s3 import S3Client
 
-def _client(endpoint_url: str) -> S3Client:
+
+def _client(endpoint_url: str) -> "S3Client":
     settings = get_settings()
     return boto3.client(
         "s3",
@@ -33,12 +39,12 @@ def _client(endpoint_url: str) -> S3Client:
 
 
 @lru_cache
-def internal_client() -> S3Client:
+def internal_client() -> "S3Client":
     return _client(get_settings().s3_endpoint_url)
 
 
 @lru_cache
-def public_client() -> S3Client:
+def public_client() -> "S3Client":
     return _client(get_settings().s3_public_endpoint_url)
 
 
