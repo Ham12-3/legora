@@ -1,6 +1,8 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 import { IN_PROGRESS, StatusBadge } from '@/components/documents/status-badge'
 import { Uploader } from '@/components/documents/uploader'
@@ -30,6 +32,21 @@ export function DocumentsPanel({
     refetchInterval: (query) =>
       query.state.data?.some((d) => IN_PROGRESS.has(d.status)) ? 5_000 : false,
   })
+
+  // This panel polls, but "New review" and "Ask the documents" are server
+  // components holding the document list as it was when the page rendered.
+  // Without this, a document that finishes ingestion while you watch flips to
+  // "ready" in the table above while both panels keep insisting nothing is
+  // ready, and the only way out is a manual reload. Refresh the server render
+  // when the number of usable documents actually changes, not on every poll.
+  const router = useRouter()
+  const readyCount = documents.filter((d) => d.status === 'ready').length
+  const lastReadyCount = useRef(readyCount)
+  useEffect(() => {
+    if (lastReadyCount.current === readyCount) return
+    lastReadyCount.current = readyCount
+    router.refresh()
+  }, [readyCount, router])
 
   const remove = useMutation({
     mutationFn: (documentId: string) =>
