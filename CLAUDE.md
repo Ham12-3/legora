@@ -133,6 +133,24 @@ the templates change.
 answers by keyword overlap and quotes verbatim, so every path runs offline;
 its cells are `model="fake"` and the review detail sets `demo_mode`.
 
+## Frontend notes
+
+- The review grid (`apps/web/components/review/review-grid.tsx`) keeps the
+  `ReviewDetail` in TanStack Query and merges `cell` events from
+  `/api/proxy/reviews/{id}/stream` (SSE through the Next proxy) into it;
+  a slow poll is the fallback while cells are in flight.
+- `CellView` renders unverified answers with an amber bar and a warning label.
+  Do not "simplify" this into an icon: rule 2.
+- pdf.js is NOT bundled. Its build is itself a webpack bundle and breaks when
+  re-bundled by Next in dev ("Object.defineProperty called on non-object").
+  `apps/web/scripts/copy-pdf-worker.mjs` (predev/prebuild) copies
+  `pdf.min.mjs` and `pdf.worker.min.mjs` into `public/`, the viewer loads them
+  with a native `import()`, and the middleware matcher exempts them. Citation
+  bboxes are PyMuPDF points with a top-left origin, same as pdf.js viewports,
+  so a highlight is `box * (renderedWidth / pageWidth)`.
+- Everything the browser fetches from the API goes through `/api/proxy/*`,
+  whose prefix allowlist must include any new router prefix.
+
 ## Fixed constants
 
 - `EMBED_DIM = 1536` — `text-embedding-3-large` called with `dimensions: 1536`.

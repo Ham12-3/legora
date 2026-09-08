@@ -14,7 +14,14 @@ import { apiUrl } from '@/lib/api'
 import { resolveContext } from '@/lib/server/api'
 import { mintInternalToken } from '@/lib/server/token'
 
-const ALLOWED_PREFIXES = new Set(['matters', 'documents', 'workspace', 'workspaces', 'me'])
+const ALLOWED_PREFIXES = new Set([
+  'matters',
+  'documents',
+  'reviews',
+  'workspace',
+  'workspaces',
+  'me',
+])
 
 type Params = { params: Promise<{ path: string[] }> }
 
@@ -48,10 +55,15 @@ async function forward(request: NextRequest, { params }: Params): Promise<Respon
     cache: 'no-store',
   })
 
-  return new NextResponse(upstream.body, {
-    status: upstream.status,
-    headers: { 'content-type': upstream.headers.get('content-type') ?? 'application/json' },
+  const responseHeaders = new Headers({
+    'content-type': upstream.headers.get('content-type') ?? 'application/json',
   })
+  // Exports set a filename; SSE must not be buffered or cached.
+  for (const name of ['content-disposition', 'cache-control', 'x-accel-buffering']) {
+    const value = upstream.headers.get(name)
+    if (value) responseHeaders.set(name, value)
+  }
+  return new NextResponse(upstream.body, { status: upstream.status, headers: responseHeaders })
 }
 
 export { forward as GET, forward as POST, forward as PATCH, forward as DELETE }
