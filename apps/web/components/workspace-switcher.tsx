@@ -4,6 +4,7 @@ import { useTransition } from 'react'
 
 import { switchWorkspace } from '@/app/(app)/actions'
 import type { Workspace } from '@/lib/types'
+import { workspaceLabels } from '@/lib/workspace-label'
 
 export function WorkspaceSwitcher({
   workspaces,
@@ -12,6 +13,7 @@ export function WorkspaceSwitcher({
   workspaces: Workspace[]
   activeId: string
 }) {
+  const labels = workspaceLabels(workspaces)
   const [pending, start] = useTransition()
 
   return (
@@ -31,7 +33,7 @@ export function WorkspaceSwitcher({
     >
       {workspaces.map((w) => (
         <option key={w.id} value={w.id}>
-          {w.name}
+          {labels.get(w.id) ?? w.name}
         </option>
       ))}
       <option value="__new">+ New workspace</option>
