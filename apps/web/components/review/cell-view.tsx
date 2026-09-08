@@ -57,7 +57,6 @@ export function CellView({ cell, selected }: { cell: Cell | undefined; selected:
   const citations = cell.citations ?? []
   const meta = [
     cell.confidence && `confidence: ${cell.confidence}`,
-    cell.model && `model: ${cell.model}`,
     cell.from_cache && 'served from cache',
   ]
     .filter(Boolean)

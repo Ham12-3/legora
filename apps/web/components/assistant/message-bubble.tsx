@@ -82,7 +82,6 @@ export function MessageBubble({
           <Badge tone="warning">⚠ Unverified — no quote matched the source</Badge>
         )}
         {message.error && <Badge tone="danger">{message.error}</Badge>}
-        {message.model && <span className="text-[var(--muted)]">{message.model}</span>}
       </div>
     </li>
   )

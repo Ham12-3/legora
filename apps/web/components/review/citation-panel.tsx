@@ -86,7 +86,6 @@ export function CitationPanel({ cell, column, document, onClose, onRerun }: Prop
                 <Badge tone="warning">Unverified — no quote matched the source</Badge>
               )}
               {cell.confidence && <Badge tone="neutral">confidence: {cell.confidence}</Badge>}
-              {cell.model && <Badge tone="neutral">{cell.model}</Badge>}
               {cell.from_cache && <Badge tone="neutral">cached</Badge>}
             </div>
           </>
