@@ -18,6 +18,7 @@ const ALLOWED_PREFIXES = new Set([
   'matters',
   'documents',
   'reviews',
+  'threads',
   'workspace',
   'workspaces',
   'me',

@@ -8,6 +8,7 @@ explicit token count in config, set by measurement — not by what the context
 window allows (CLAUDE.md, section 3.6).
 """
 
+import re
 import uuid
 from dataclasses import dataclass
 from typing import Literal
@@ -65,11 +66,22 @@ async def load_chunks(session: AsyncSession, document_id: uuid.UUID) -> list[Chu
     return list(rows.scalars().all())
 
 
+_TERM = re.compile(r"[A-Za-z0-9][A-Za-z0-9'-]{1,}")
+
+
+def lexical_query(question: str) -> str:
+    """OR the question's words. ``plainto_tsquery`` ANDs them, so one word the
+    document does not use ("cap" for "shall not exceed") would hide every hit;
+    ``ts_rank_cd`` still ranks passages matching more terms higher."""
+    terms = {t.lower() for t in _TERM.findall(question) if len(t) > 2}
+    return " OR ".join(sorted(terms)) or question
+
+
 async def _lexical(
     session: AsyncSession, document_id: uuid.UUID, question: str, k: int
 ) -> list[uuid.UUID]:
     tsv = func.to_tsvector("english", Chunk.text)
-    query = func.plainto_tsquery("english", question)
+    query = func.websearch_to_tsquery("english", lexical_query(question))
     stmt = (
         select(Chunk.id)
         .where(Chunk.document_id == document_id, tsv.op("@@")(query))

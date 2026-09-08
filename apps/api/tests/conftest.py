@@ -72,7 +72,8 @@ async def clean_tables() -> AsyncIterator[None]:
             async with SessionLocal() as session:
                 await session.execute(
                     text(
-                        "TRUNCATE citations, cells, review_runs, review_columns, "
+                        "TRUNCATE messages, thread_documents, threads, "
+                        "citations, cells, review_runs, review_columns, "
                         "review_documents, reviews, cell_cache, chunks, document_pages, "
                         "documents, matters, memberships, workspaces, users CASCADE"
                     )

@@ -52,6 +52,15 @@ Without `OPENAI_API_KEY`, a deterministic placeholder model answers by keyword
 overlap so the whole flow can be exercised; the grid shows a demo banner and
 cells carry `model=fake`.
 
+## Assistant
+
+On a matter, start a conversation over a set of ready documents. Answers are
+built only from retrieved passages, stream in as they are written, and carry
+numbered citation chips that open the source page with the words highlighted.
+When retrieval finds nothing relevant the assistant says so and no model is
+called; an answer whose quotes could not be located in the source is marked
+unverified.
+
 ## Ingestion
 
 Uploading a document enqueues `parse -> chunk -> embed` on the arq worker;

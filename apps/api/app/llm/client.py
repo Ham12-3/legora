@@ -10,18 +10,25 @@ import json
 import logging
 import random
 import time
+from collections.abc import AsyncIterator
 from typing import Any, Protocol
 
 import openai
 from openai import AsyncOpenAI
 
+from app.assistant.prompt import render_chat_messages
+from app.assistant.stream import AnswerFieldStreamer
 from app.config import Settings, get_settings
 from app.llm.limits import RateLimiter
 from app.llm.schema import (
     CELL_ANSWER_SCHEMA,
+    CHAT_ANSWER_SCHEMA,
     AnswerSet,
     BatchItem,
     BatchStatus,
+    ChatAnswer,
+    ChatRequest,
+    ChatResult,
     ExtractionRequest,
     ExtractionResult,
     Usage,
@@ -42,6 +49,10 @@ class LLMClient(Protocol):
 
     async def batch_poll(self, batch_id: str) -> BatchStatus: ...
 
+    def chat(self, request: ChatRequest) -> AsyncIterator[tuple[str, Any]]:
+        """Yield (\"delta\", str) as the answer is written, then (\"done\", ChatResult)."""
+        ...
+
 
 def _estimate_request_tokens(request: ExtractionRequest) -> int:
     chars = len(request.system_prompt) + sum(len(p.text) for p in request.passages)
@@ -49,12 +60,14 @@ def _estimate_request_tokens(request: ExtractionRequest) -> int:
     return chars // 4 + 500
 
 
-def _response_format(name: str = "cell_answers") -> dict[str, Any]:
+def _response_format(
+    name: str = "cell_answers", schema: dict[str, Any] | None = None
+) -> dict[str, Any]:
     return {
         "format": {
             "type": "json_schema",
             "name": name,
-            "schema": CELL_ANSWER_SCHEMA,
+            "schema": schema or CELL_ANSWER_SCHEMA,
             "strict": True,
         }
     }
@@ -116,6 +129,42 @@ class OpenAIClient:
         return ExtractionResult(
             answers=answers, model=response.model, usage=usage, latency_ms=latency_ms
         )
+
+    # --- Assistant -------------------------------------------------------------
+
+    async def chat(self, request: ChatRequest) -> AsyncIterator[tuple[str, Any]]:
+        estimate = len(request.system_prompt) // 4 + sum(len(p.text) for p in request.passages) // 4
+        estimate += sum(len(t.content) for t in request.history) // 4 + 400
+        body: dict[str, Any] = {
+            "model": request.model,
+            "input": render_chat_messages(request),
+            "text": _response_format("chat_answer", CHAT_ANSWER_SCHEMA),
+            "metadata": request.metadata,
+            "stream": True,
+        }
+        streamer = AnswerFieldStreamer()
+        raw: list[str] = []
+        final: Any = None
+        started = time.monotonic()
+        async with self._limiter.semaphore:
+            await self._limiter.acquire(estimate)
+            stream = await self._client.responses.create(**body)
+            async for event in stream:
+                kind = getattr(event, "type", "")
+                if kind == "response.output_text.delta":
+                    delta = str(getattr(event, "delta", ""))
+                    raw.append(delta)
+                    text = streamer.feed(delta)
+                    if text:
+                        yield ("delta", text)
+                elif kind == "response.completed":
+                    final = getattr(event, "response", None)
+        latency_ms = int((time.monotonic() - started) * 1000)
+        usage = _usage_from(final) if final is not None else Usage()
+        self._limiter.record_actual(usage.input_tokens + usage.output_tokens, estimate)
+        answer = ChatAnswer.model_validate_json("".join(raw))
+        model = str(getattr(final, "model", request.model) or request.model)
+        yield ("done", ChatResult(answer=answer, model=model, usage=usage, latency_ms=latency_ms))
 
     # --- Batch API -----------------------------------------------------------
 

@@ -24,6 +24,7 @@ from app.models.review import (
     RunMode,
     RunStatus,
 )
+from app.models.thread import Message, MessageRole, Thread, ThreadDocument
 from app.models.user import User
 from app.models.workspace import Membership, Role, Workspace
 
@@ -39,6 +40,8 @@ __all__ = [
     "DocumentStatus",
     "Matter",
     "Membership",
+    "Message",
+    "MessageRole",
     "OutputType",
     "Review",
     "ReviewColumn",
@@ -47,6 +50,8 @@ __all__ = [
     "Role",
     "RunMode",
     "RunStatus",
+    "Thread",
+    "ThreadDocument",
     "User",
     "Workspace",
 ]

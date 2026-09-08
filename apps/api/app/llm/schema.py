@@ -129,3 +129,72 @@ class BatchStatus:
     results: dict[str, ExtractionResult] = field(default_factory=dict)
     errors: dict[str, str] = field(default_factory=dict)
     detail: str = ""
+
+
+# --- assistant ------------------------------------------------------------------
+
+
+class ChatCitation(BaseModel):
+    marker: int
+    chunk_id: str  # passage label, e.g. "d2c14"
+    text: str
+
+
+class ChatAnswer(BaseModel):
+    answer: str
+    citations: list[ChatCitation] = Field(default_factory=list)
+    insufficient: bool = False
+
+
+CHAT_ANSWER_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "answer": {"type": "string"},
+        "citations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "marker": {"type": "integer"},
+                    "chunk_id": {"type": "string"},
+                    "text": {"type": "string"},
+                },
+                "required": ["marker", "chunk_id", "text"],
+                "additionalProperties": False,
+            },
+        },
+        "insufficient": {"type": "boolean"},
+    },
+    "required": ["answer", "citations", "insufficient"],
+    "additionalProperties": False,
+}
+
+
+@dataclass(frozen=True)
+class ChatTurn:
+    role: str  # "user" | "assistant"
+    content: str
+
+
+@dataclass(frozen=True)
+class ChatRequest:
+    """A grounded question over passages from one or more documents.
+
+    Rendering order (``app.assistant.prompt``): system, passages, history,
+    then the question LAST.
+    """
+
+    model: str
+    system_prompt: str
+    passages: tuple[Passage, ...]
+    history: tuple[ChatTurn, ...]
+    question: str
+    metadata: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ChatResult:
+    answer: ChatAnswer
+    model: str
+    usage: Usage
+    latency_ms: int

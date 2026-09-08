@@ -18,7 +18,7 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.errors import install_error_handlers
 from app.queue import close_pool
-from app.routers import auth, documents, matters, reviews, workspaces
+from app.routers import auth, documents, matters, reviews, threads, workspaces
 
 settings = get_settings()
 
@@ -50,6 +50,7 @@ app.include_router(workspaces.router)
 app.include_router(matters.router)
 app.include_router(documents.router)
 app.include_router(reviews.router)
+app.include_router(threads.router)
 
 
 class Health(BaseModel):

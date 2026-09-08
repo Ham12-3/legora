@@ -284,8 +284,15 @@ async def test_router_uses_retrieval_above_threshold(
         assert full.mode == "full"
         assert len(full.passages) == len(full.chunks)
 
+        # k=1 because the fixture has only a handful of chunks; the default k
+        # would legitimately select all of them.
         narrow = await build_context(
-            session, document, ["Which law governs this agreement?"], embedder=None, threshold=50
+            session,
+            document,
+            ["Which law governs this agreement?"],
+            embedder=None,
+            threshold=50,
+            top_k=1,
         )
         assert narrow.mode == "retrieval"
         assert 0 < len(narrow.passages) < len(narrow.chunks)

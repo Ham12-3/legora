@@ -133,6 +133,33 @@ the templates change.
 answers by keyword overlap and quotes verbatim, so every path runs offline;
 its cells are `model="fake"` and the review detail sets `demo_mode`.
 
+## How the assistant answers
+
+`apps/api/app/assistant/service.py::answer_stream`, behind
+`POST /threads/{id}/messages` — the one model call outside the worker, allowed
+because the endpoint is explicitly streamed (rule 6). Events: `message` (the
+stored user turn), `status`, `delta` (answer prose as written), `message` (the
+final assistant turn), `error`.
+
+1. `retrieval.retrieve_across` runs lexical (`websearch_to_tsquery` with the
+   question's words OR-ed — AND semantics would hide every hit when one word is
+   missing) and vector (pgvector cosine, only within
+   `assistant_vector_max_distance`) search across the thread's ready documents,
+   fuses by reciprocal rank, reranks by lexical overlap, adds neighbours of the
+   strongest hits, and labels passages `d<doc>c<ordinal>`.
+2. **No hits means refusal.** The assistant stores a fixed "couldn't find
+   anything" message with `insufficient=true` and the model is never called.
+   `tests/assistant` proves the model call count stays at zero.
+3. Otherwise the prompt (`prompts/assistant.<version>.md`) is rendered system,
+   passages, history, question LAST, with Structured Outputs
+   (`CHAT_ANSWER_SCHEMA`: answer, numbered citations, insufficient). The
+   `answer` field is streamed out of the partial JSON by
+   `assistant/stream.py`.
+4. Every citation is verified with the same `review/verify.py` used by the
+   grid. Unverified quotes are dropped and their `[n]` markers removed from
+   the prose; the message is `verified=false` if any marker lost its source.
+   The model's own `insufficient` judgement is kept, never overridden.
+
 ## Frontend notes
 
 - The review grid (`apps/web/components/review/review-grid.tsx`) keeps the
@@ -149,7 +176,11 @@ its cells are `model="fake"` and the review detail sets `demo_mode`.
   bboxes are PyMuPDF points with a top-left origin, same as pdf.js viewports,
   so a highlight is `box * (renderedWidth / pageWidth)`.
 - Everything the browser fetches from the API goes through `/api/proxy/*`,
-  whose prefix allowlist must include any new router prefix.
+  whose prefix allowlist must include any new router prefix. Forgetting this
+  fails silently as a 404 from the proxy.
+- The chat posts the question and reads the SSE reply from the fetch body
+  (`lib/sse.ts`) because EventSource cannot POST. `[n]` markers render as
+  chips bound to verified citations; a marker with no citation stays plain.
 
 ## Fixed constants
 

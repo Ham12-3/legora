@@ -96,6 +96,13 @@ class Settings(BaseSettings):
     # Fuzzy citation match acceptance threshold (difflib ratio).
     citation_fuzzy_threshold: float = 0.9
 
+    # Assistant
+    assistant_top_k: int = 16
+    assistant_history_messages: int = 8
+    # A vector hit farther than this (cosine distance) is not relevant on its
+    # own. Without the guard, 'nothing relevant' could never happen.
+    assistant_vector_max_distance: float = 0.6
+
     @property
     def is_development(self) -> bool:
         return self.environment == "development"

@@ -13,12 +13,18 @@ the tests prove the verifier rejects them.
 
 import re
 import uuid
+from collections.abc import AsyncIterator
+from typing import Any
 
 from app.llm.schema import (
     Answer,
     AnswerSet,
     BatchItem,
     BatchStatus,
+    ChatAnswer,
+    ChatCitation,
+    ChatRequest,
+    ChatResult,
     ExtractionRequest,
     ExtractionResult,
     Quote,
@@ -76,8 +82,16 @@ _SENTENCE = re.compile(r"(?<=[.;:!?])\s+")
 _WORD = re.compile(r"[a-z0-9£$€%]+")
 
 
+def _stem(word: str) -> str:
+    """Crude suffix stripping so 'indemnifies' meets 'indemnify'. Fake only."""
+    for suffix in ("ies", "ing", "ment", "tion", "es", "ed", "s"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 4:
+            return word[: -len(suffix)] + ("y" if suffix == "ies" else "")
+    return word
+
+
 def _keywords(text: str) -> set[str]:
-    return {w for w in _WORD.findall(text.lower()) if w not in _STOPWORDS and len(w) > 2}
+    return {_stem(w) for w in _WORD.findall(text.lower()) if w not in _STOPWORDS and len(w) > 2}
 
 
 class FakeLLMClient:
@@ -152,6 +166,55 @@ class FakeLLMClient:
             model="fake",
             usage=Usage(input_tokens=chars // 4, output_tokens=50 * len(answers)),
             latency_ms=1,
+        )
+
+    async def chat(self, request: ChatRequest) -> AsyncIterator[tuple[str, Any]]:
+        """Grounded fake: cite the two best-overlapping sentences, or refuse."""
+        self.chat_calls: list[ChatRequest] = getattr(self, "chat_calls", [])
+        self.chat_calls.append(request)
+        keys = _keywords(request.question)
+        candidates: list[tuple[int, str, str, str]] = []  # score, label, sentence, doc
+        for passage in request.passages:
+            doc = passage.section_path.split(" > ")[0].removeprefix("document: ")
+            for sentence in _SENTENCE.split(passage.text):
+                score = len(keys & _keywords(sentence))
+                if score > 0 and len(sentence.strip()) > 20:
+                    candidates.append((score, passage.label, sentence.strip(), doc))
+        candidates.sort(key=lambda c: -c[0])
+        picked = candidates[:2]
+
+        if not picked:
+            answer = ChatAnswer(
+                answer="The selected documents do not appear to address this question.",
+                citations=[],
+                insufficient=True,
+            )
+        else:
+            parts: list[str] = []
+            citations: list[ChatCitation] = []
+            for marker, (_, label, sentence, doc) in enumerate(picked, start=1):
+                parts.append(f"In {doc}: {sentence} [{marker}]")
+                quote = (
+                    sentence
+                    if not self.fabricate
+                    else "The Supplier shall pay liquidated damages of ten per cent (10%) of the "
+                    "Fees for each week of delay beyond the agreed delivery date."
+                )
+                citations.append(ChatCitation(marker=marker, chunk_id=label, text=quote))
+            answer = ChatAnswer(answer=" ".join(parts), citations=citations, insufficient=False)
+
+        # Stream the prose a few words at a time, like a real model would.
+        words = answer.answer.split(" ")
+        for i in range(0, len(words), 4):
+            yield ("delta", " ".join(words[i : i + 4]) + (" " if i + 4 < len(words) else ""))
+        yield (
+            "done",
+            ChatResult(
+                answer=answer,
+                model="fake",
+                usage=Usage(input_tokens=sum(len(p.text) for p in request.passages) // 4),
+                latency_ms=1,
+            ),
         )
 
     async def batch_submit(self, items: list[BatchItem]) -> str:

@@ -424,6 +424,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Threads */
+        get: operations["list_threads_threads_get"];
+        put?: never;
+        /** Create Thread */
+        post: operations["create_thread_threads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Thread */
+        get: operations["get_thread_threads__thread_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Thread */
+        delete: operations["delete_thread_threads__thread_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/threads/{thread_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Thread Documents */
+        patch: operations["set_thread_documents_threads__thread_id__documents_patch"];
+        trace?: never;
+    };
+    "/threads/{thread_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Messages */
+        get: operations["list_messages_threads__thread_id__messages_get"];
+        put?: never;
+        /** Post Message */
+        post: operations["post_message_threads__thread_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -764,6 +835,75 @@ export interface components {
             name: string;
             role: components["schemas"]["Role"];
         };
+        /** MessageCitation */
+        MessageCitation: {
+            /** Marker */
+            marker: number;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Filename */
+            filename: string;
+            /** Chunk Id */
+            chunk_id: string | null;
+            /** Quoted Text */
+            quoted_text: string;
+            /** Page */
+            page: number;
+            /** Char Start */
+            char_start: number;
+            /** Char End */
+            char_end: number;
+            /** Bboxes */
+            bboxes: {
+                [key: string]: unknown;
+            };
+            /** Match Kind */
+            match_kind: string;
+        };
+        /** MessageCreate */
+        MessageCreate: {
+            /** Content */
+            content: string;
+        };
+        /** MessageOut */
+        MessageOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Thread Id
+             * Format: uuid
+             */
+            thread_id: string;
+            role: components["schemas"]["MessageRole"];
+            /** Content */
+            content: string;
+            /** Citations */
+            citations?: components["schemas"]["MessageCitation"][];
+            /** Verified */
+            verified: boolean;
+            /** Insufficient */
+            insufficient: boolean;
+            /** Model */
+            model: string | null;
+            /** Error */
+            error: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * MessageRole
+         * @enum {string}
+         */
+        MessageRole: "user" | "assistant";
         /**
          * OutputType
          * @enum {string}
@@ -986,6 +1126,79 @@ export interface components {
          * @enum {string}
          */
         RunStatus: "queued" | "running" | "submitted" | "done" | "failed";
+        /** ThreadCreate */
+        ThreadCreate: {
+            /**
+             * Matter Id
+             * Format: uuid
+             */
+            matter_id: string;
+            /** Title */
+            title?: string | null;
+            /** Document Ids */
+            document_ids?: string[];
+        };
+        /** ThreadDetail */
+        ThreadDetail: {
+            thread: components["schemas"]["ThreadOut"];
+            /** Documents */
+            documents: components["schemas"]["ThreadDocumentOut"][];
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
+            /**
+             * Demo Mode
+             * @default false
+             */
+            demo_mode: boolean;
+        };
+        /** ThreadDocumentOut */
+        ThreadDocumentOut: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Filename */
+            filename: string;
+            /** Mime Type */
+            mime_type: string;
+            status: components["schemas"]["DocumentStatus"];
+        };
+        /** ThreadDocumentsUpdate */
+        ThreadDocumentsUpdate: {
+            /** Document Ids */
+            document_ids: string[];
+        };
+        /** ThreadOut */
+        ThreadOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Matter Id
+             * Format: uuid
+             */
+            matter_id: string;
+            /** Title */
+            title: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Document Count
+             * @default 0
+             */
+            document_count: number;
+            /**
+             * Message Count
+             * @default 0
+             */
+            message_count: number;
+        };
         /** UserOut */
         UserOut: {
             /**
@@ -2020,6 +2233,231 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_threads_threads_get: {
+        parameters: {
+            query?: {
+                matter_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_thread_threads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThreadCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_thread_threads__thread_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_thread_threads__thread_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_thread_documents_threads__thread_id__documents_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThreadDocumentsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_messages_threads__thread_id__messages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_message_threads__thread_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageCreate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -28,6 +28,7 @@ class Ids:
     review_id: uuid.UUID
     column_id: uuid.UUID
     run_id: uuid.UUID
+    thread_id: uuid.UUID
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,7 @@ class EntityRoute:
             review_id=ids.review_id,
             column_id=ids.column_id,
             run_id=ids.run_id,
+            thread_id=ids.thread_id,
         )
 
 
@@ -94,9 +96,21 @@ ENTITY_ROUTES: list[EntityRoute] = [
     EntityRoute("GET", "/reviews/{review_id}/runs/{run_id}"),
     EntityRoute("GET", "/reviews/{review_id}/stream"),
     EntityRoute("GET", "/reviews/{review_id}/export"),
+    EntityRoute("GET", "/threads/{thread_id}"),
+    EntityRoute("DELETE", "/threads/{thread_id}"),
+    EntityRoute("PATCH", "/threads/{thread_id}/documents", _add_docs_body),
+    EntityRoute("GET", "/threads/{thread_id}/messages"),
+    EntityRoute("POST", "/threads/{thread_id}/messages", lambda ids: {"content": "hi"}),
 ]
 
-ENTITY_PARAMS = ("{matter_id}", "{document_id}", "{review_id}", "{column_id}", "{run_id}")
+ENTITY_PARAMS = (
+    "{matter_id}",
+    "{document_id}",
+    "{review_id}",
+    "{column_id}",
+    "{run_id}",
+    "{thread_id}",
+)
 
 
 def test_every_entity_route_is_covered() -> None:
@@ -126,7 +140,14 @@ async def make_ids(client: httpx.AsyncClient, actor: Actor, label: str) -> Ids:
     column_id = uuid.UUID(r.json()["id"])
     r = await client.post(f"/reviews/{review_id}/run", json={}, headers=actor.headers)
     assert r.status_code == 202, r.text
-    return Ids(matter_id, document_id, review_id, column_id, uuid.UUID(r.json()["id"]))
+    run_id = uuid.UUID(r.json()["id"])
+    t = await client.post(
+        "/threads",
+        json={"matter_id": str(matter_id), "document_ids": [str(document_id)]},
+        headers=actor.headers,
+    )
+    assert t.status_code == 201, t.text
+    return Ids(matter_id, document_id, review_id, column_id, run_id, uuid.UUID(t.json()["id"]))
 
 
 @pytest.fixture
