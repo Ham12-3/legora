@@ -30,50 +30,86 @@ body {
 /* ---------------------------------------------------------------------------
  * Landing page.
  *
- * Dark regardless of the visitor's colour scheme, scoped to .landing-root so
- * none of it reaches the signed-in product. Amber is reserved for one thing —
- * an unverified answer — so it means something wherever it appears.
+ * Paper, not product chrome: warm off-white, hairline rules, a serif page in
+ * the hero. Scoped to .landing-root so none of it reaches the signed-in app.
+ * Amber appears in exactly two places, and means the same thing in both: the
+ * highlighter on the source sentence, and the bar on an unverified answer.
  * ------------------------------------------------------------------------- */
 
 .landing-root {
-  --l-bg: #08090b;
-  --l-fg: #edeef0;
-  --l-dim: #9ba1aa;
-  --l-line: #22252b;
-  --l-panel: #0d0f13;
-  --l-amber: #e0a33c;
+  --l-bg: #faf9f6;
+  --l-sunk: #f2f0ea;
+  --l-panel: #ffffff;
+  --l-fg: #171614;
+  --l-dim: #5f5c56;
+  --l-rule: #e2ded4;
+  --l-amber: #b8801a;
 
-  color-scheme: dark;
+  color-scheme: light;
   background: var(--l-bg);
   color: var(--l-fg);
 }
 
 body:has(.landing-root) {
-  background: #08090b;
+  background: #faf9f6;
+}
+
+.landing-width {
+  margin-inline: auto;
+  max-width: 68rem;
+  padding-inline: 1.5rem;
 }
 
 .landing-header {
-  border-bottom: 1px solid var(--l-line);
-  background: var(--l-bg);
+  border-bottom: 1px solid var(--l-rule);
 }
 
-/* Fades the canvas out behind the copy so the text never fights it. */
-.landing-veil {
-  background:
-    linear-gradient(
-      to right,
-      var(--l-bg) 0%,
-      color-mix(in srgb, var(--l-bg) 70%, transparent) 46%,
-      transparent 82%
-    ),
-    linear-gradient(to bottom, transparent 55%, var(--l-bg) 100%);
+/* The hero page sits in a fixed A4-ish frame so the layout does not reflow
+ * while the WebGL context is still starting up. */
+.landing-stage {
+  position: relative;
+  aspect-ratio: 1 / 1.15;
+  width: 100%;
+}
+
+/* The extracted value, pinned to the end of the sentence it came from. The
+ * transform is written every frame from the projected 3D position. */
+.landing-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  border: 1px solid var(--l-rule);
+  border-left: 3px solid var(--l-amber);
+  border-radius: 3px;
+  background: var(--l-panel);
+  box-shadow: 0 6px 20px rgb(23 22 20 / 12%);
+  padding: 0.45rem 0.7rem;
+  pointer-events: none;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.landing-chip-q {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--l-dim);
+}
+
+.landing-chip-a {
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .landing-btn,
 .landing-btn-ghost {
   display: inline-flex;
   align-items: center;
-  border-radius: 6px;
+  border-radius: 5px;
   padding: 0.4rem 0.85rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -85,18 +121,18 @@ body:has(.landing-root) {
 
 .landing-btn {
   background: var(--l-fg);
-  color: #08090b;
+  color: var(--l-bg);
 }
 .landing-btn:hover {
-  background: #ffffff;
+  background: #000000;
 }
 
 .landing-btn-ghost {
-  border: 1px solid var(--l-line);
+  border: 1px solid var(--l-rule);
   color: var(--l-fg);
 }
 .landing-btn-ghost:hover {
-  border-color: #343841;
+  border-color: #c9c4b6;
 }
 
 .landing-btn-lg {
@@ -105,7 +141,7 @@ body:has(.landing-root) {
 }
 
 .landing-panel {
-  border: 1px solid var(--l-line);
+  border: 1px solid var(--l-rule);
   background: var(--l-panel);
 }
 

@@ -134,7 +134,7 @@ export function GridDemo() {
 
   return (
     <div ref={hostRef} className="landing-panel overflow-hidden rounded-lg">
-      <div className="flex items-center justify-between gap-4 border-b border-[var(--l-line)] px-5 py-3">
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--l-rule)] px-5 py-3">
         <div className="flex items-baseline gap-3">
           <span className="text-sm font-medium">Q3 vendor contracts</span>
           <span className="text-xs text-[var(--l-dim)]">4 documents, 4 questions</span>
@@ -160,7 +160,7 @@ export function GridDemo() {
                 <th
                   key={column}
                   scope="col"
-                  className="border-l border-[var(--l-line)] px-4 py-3 text-xs font-medium text-[var(--l-dim)]"
+                  className="border-l border-[var(--l-rule)] px-4 py-3 text-xs font-medium text-[var(--l-dim)]"
                 >
                   {column}
                 </th>
@@ -172,7 +172,7 @@ export function GridDemo() {
               <tr key={row.document}>
                 <th
                   scope="row"
-                  className="sticky left-0 z-20 max-w-[17rem] truncate border-t border-[var(--l-line)] bg-[var(--l-panel)] px-5 py-3.5 text-sm font-normal"
+                  className="sticky left-0 z-20 max-w-[17rem] truncate border-t border-[var(--l-rule)] bg-[var(--l-panel)] px-5 py-3.5 text-sm font-normal"
                   title={row.document}
                 >
                   {row.document}
@@ -182,12 +182,12 @@ export function GridDemo() {
                   return (
                     <td
                       key={COLUMNS[columnIndex]}
-                      className="border-t border-l border-[var(--l-line)] px-4 py-3.5 align-top"
+                      className="border-t border-l border-[var(--l-rule)] px-4 py-3.5 align-top"
                     >
                       {index < revealed ? (
                         <CellBody cell={cell} />
                       ) : (
-                        <span className="block h-3 w-2/3 animate-pulse rounded bg-[var(--l-line)]" />
+                        <span className="block h-3 w-2/3 animate-pulse rounded bg-[var(--l-sunk)]" />
                       )}
                     </td>
                   )

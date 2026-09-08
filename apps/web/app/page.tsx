@@ -2,13 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { auth } from '@/auth'
-import { DocumentField } from '@/components/landing/document-field'
+import { CitationScene } from '@/components/landing/citation-scene'
 import { GridDemo } from '@/components/landing/grid-demo'
 
 export const metadata: Metadata = {
   title: 'Legora — contract review in a grid',
   description:
-    'Legora answers your questions about a set of contracts, one column at a time, and shows you the sentence each answer came from.',
+    'Run a question down every contract in a matter and keep the sentence each answer came from.',
 }
 
 /**
@@ -23,14 +23,14 @@ export default async function Home() {
   return (
     <div className="landing-root">
       <header className="landing-header">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-6 py-4">
+        <div className="landing-width flex items-center justify-between gap-6 py-5">
           <span className="text-[15px] font-semibold tracking-tight">Legora</span>
           {signedIn ? (
             <Link href="/matters" className="landing-btn">
               Open workspace
             </Link>
           ) : (
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-6">
               <Link href="/login" className="text-sm text-[var(--l-dim)] hover:text-[var(--l-fg)]">
                 Sign in
               </Link>
@@ -43,20 +43,19 @@ export default async function Home() {
       </header>
 
       <main>
-        <section className="relative isolate overflow-hidden">
-          <DocumentField />
-          <div className="landing-veil pointer-events-none absolute inset-0" />
-
-          <div className="relative mx-auto max-w-5xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32">
-            <h1 className="max-w-3xl text-4xl leading-[1.08] font-semibold tracking-[-0.025em] sm:text-5xl">
-              Contract review in a grid
+        <section className="landing-width grid items-center gap-12 py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-20 lg:py-24">
+          <div>
+            <h1 className="text-4xl leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[3.25rem]">
+              Documents are rows.
+              <br />
+              Questions are columns.
             </h1>
-            <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-[var(--l-dim)]">
-              Legora answers a question about every contract in a matter at once. Documents are
-              rows, your questions are columns, and each cell carries the sentence it came from,
-              located in the file before you see it.
+            <p className="mt-7 max-w-lg text-[17px] leading-relaxed text-[var(--l-dim)]">
+              Legora runs each question down every contract in the matter, and keeps the sentence
+              each answer came from. Click a cell and that sentence is highlighted on the page it
+              was taken from.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 href={signedIn ? '/matters' : '/register'}
                 className="landing-btn landing-btn-lg"
@@ -70,56 +69,60 @@ export default async function Home() {
               )}
             </div>
           </div>
+
+          <CitationScene />
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <GridDemo />
-          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-[var(--l-dim)]">
-            A quote that cannot be found in the source is not shown as an answer. It keeps the amber
-            bar wherever it goes: on screen, in the CSV, in the exported issues list.
-          </p>
+        <section className="border-t border-[var(--l-rule)] bg-[var(--l-sunk)]">
+          <div className="landing-width py-16">
+            <GridDemo />
+            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-[var(--l-dim)]">
+              A quote that cannot be found in the source is not shown as an answer. It keeps the
+              amber bar wherever it goes: on screen, in the CSV, in the exported issues list.
+            </p>
+          </div>
         </section>
 
-        <section className="border-t border-[var(--l-line)]">
-          <div className="mx-auto grid max-w-5xl gap-x-16 gap-y-10 px-6 py-20 sm:grid-cols-2">
+        <section className="landing-width py-20">
+          <dl className="grid gap-x-16 gap-y-11 sm:grid-cols-2">
             <div>
-              <h2 className="text-sm font-semibold">Answers you can check</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--l-dim)]">
-                Every cell stores a verbatim span, its page, and the position of the words on that
-                page. Click one and the PDF opens with those words highlighted. Where the quote
-                could not be matched, the answer is marked unverified rather than shown as fact.
-              </p>
+              <dt className="text-sm font-semibold">Answers you can check</dt>
+              <dd className="mt-2.5 text-sm leading-relaxed text-[var(--l-dim)]">
+                A cell stores a verbatim span, its page, and where the words sit on that page. Where
+                the quote could not be matched in the file, the answer is marked unverified instead
+                of being shown as fact.
+              </dd>
             </div>
             <div>
-              <h2 className="text-sm font-semibold">An assistant that can decline</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--l-dim)]">
+              <dt className="text-sm font-semibold">An assistant that can decline</dt>
+              <dd className="mt-2.5 text-sm leading-relaxed text-[var(--l-dim)]">
                 Ask across a set of documents and the reply is built only from passages retrieved
                 from them, with numbered citations that open the page. If retrieval turns up nothing
-                relevant, it says so, and no model is called.
-              </p>
+                relevant it says so, and no model is called.
+              </dd>
             </div>
             <div>
-              <h2 className="text-sm font-semibold">Your playbook</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--l-dim)]">
+              <dt className="text-sm font-semibold">Your playbook</dt>
+              <dd className="mt-2.5 text-sm leading-relaxed text-[var(--l-dim)]">
                 Write down the preferred, fallback and unacceptable position for each point you care
-                about. Run it over a contract to get the position it takes, the clause, and
-                replacement language, exported as a DOCX issues list.
-              </p>
+                about. Run it over a contract for the position it takes, the clause, and replacement
+                language, exported as a DOCX issues list.
+              </dd>
             </div>
             <div>
-              <h2 className="text-sm font-semibold">Separate by workspace</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--l-dim)]">
+              <dt className="text-sm font-semibold">Separate by workspace</dt>
+              <dd className="mt-2.5 text-sm leading-relaxed text-[var(--l-dim)]">
                 Documents, reviews and playbooks belong to a workspace, and the filter is applied
                 below the route handler rather than in it. A record from another workspace is a 404,
                 the same response as one that does not exist.
-              </p>
+              </dd>
             </div>
-          </div>
+          </dl>
         </section>
       </main>
 
-      <footer className="border-t border-[var(--l-line)]">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-8 text-sm text-[var(--l-dim)] sm:flex-row sm:items-center sm:justify-between">
+      <footer className="border-t border-[var(--l-rule)]">
+        <div className="landing-width flex flex-col gap-3 py-8 text-sm text-[var(--l-dim)] sm:flex-row sm:items-center sm:justify-between">
           <span className="font-semibold text-[var(--l-fg)]">Legora</span>
           <p>Output is a drafting aid, not legal advice. Check it against the cited source.</p>
         </div>
