@@ -9,7 +9,7 @@ See [CLAUDE.md](./CLAUDE.md) for architecture, conventions, and commands.
 ## Getting started
 
 ```bash
-cp .env.example .env      # add OPENAI_API_KEY when you reach Phase 3
+cp .env.example .env      # OPENAI_API_KEY optional; without it a placeholder model runs
 pnpm install
 uv sync --directory apps/api
 pnpm dev                  # or: make dev
@@ -30,7 +30,8 @@ pnpm test                 # or: make test
 
 The API tests run against a real Postgres: they create and migrate
 `legora_test` on the compose instance the first time, and truncate every table
-between tests. `docker compose up -d postgres` is enough if you do not want the
+between tests — so run one suite at a time; two concurrent runs wipe each
+other's rows and fail with phantom 404s. `docker compose up -d postgres` is enough if you do not want the
 whole stack. Storage, the queue, and embeddings are faked; OCR is off (Tesseract
 lives in the container, not on your machine).
 

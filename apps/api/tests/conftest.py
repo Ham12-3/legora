@@ -4,7 +4,8 @@ Tests run against a real Postgres (``legora_test`` on the compose instance):
 the tenancy guarantees live in SQL and a SQLite stand-in would prove nothing.
 The database is created on first run and migrated with Alembic, so the tests
 exercise the same schema production gets. Every table is truncated after each
-test.
+test, so only one pytest process may run at a time: a second one truncates the
+first one's rows mid-test and the failures look like phantom 404s.
 """
 
 import asyncio
