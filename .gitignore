@@ -1,0 +1,34 @@
+# deps
+node_modules/
+.pnpm-store/
+.venv/
+__pycache__/
+*.egg-info/
+.uv-cache/
+
+# builds
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+# env + secrets
+.env
+.env.local
+.env.*.local
+
+# tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+coverage/
+.vitest/
+
+# local data
+data/
+*.log
+.DS_Store
+
+# copied from pdfjs-dist before dev/build
+apps/web/public/pdf.min.mjs
+apps/web/public/pdf.worker.min.mjs

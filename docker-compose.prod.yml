@@ -1,0 +1,156 @@
+# Single-box production stack.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Differences from docker-compose.yml, which is for development only: images
+# are built from the production Dockerfiles, nothing is bind-mounted, no
+# reloader runs, and every secret comes from the environment with no default —
+# the stack refuses to start rather than booting with a known password.
+#
+# Migrations run once, in their own container, and the API waits for them to
+# finish. Replicas do not race to migrate on boot.
+#
+# Postgres, Redis and MinIO are here so a single host works out of the box.
+# Point DATABASE_URL, REDIS_URL and the S3_* variables at managed services and
+# you can delete those three, along with their volumes.
+
+name: legora-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+    volumes:
+      - miniodata:/data
+    # Published because the browser PUTs uploads straight to presigned URLs and
+    # SigV4 signs the host: S3_PUBLIC_ENDPOINT_URL has to be an address the
+    # browser can reach. Behind a reverse proxy, terminate TLS here and set
+    # S3_PUBLIC_ENDPOINT_URL to the public name instead of publishing the port.
+    ports:
+      - '9000:9000'
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # One-shot. The API and worker wait for it to exit cleanly.
+  migrate:
+    build:
+      context: ./apps/api
+    restart: 'no'
+    command: ['alembic', 'upgrade', 'head']
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:?set REDIS_URL}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:?set S3_ENDPOINT_URL}
+      # SigV4 signs the host, so this must be an address the browser can reach.
+      S3_PUBLIC_ENDPOINT_URL: ${S3_PUBLIC_ENDPOINT_URL:?set S3_PUBLIC_ENDPOINT_URL}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set INTERNAL_API_SECRET}
+      # The key lives here and in the worker. Never in web.
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    command: ['arq', 'app.worker.WorkerSettings']
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:?set REDIS_URL}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:?set S3_ENDPOINT_URL}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Server to server, inside the compose network. Never exposed.
+      API_BASE_URL: http://api:8000
+      AUTH_URL: ${APP_URL:?set APP_URL}
+      NEXT_PUBLIC_APP_URL: ${APP_URL}
+      AUTH_TRUST_HOST: 'true'
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set INTERNAL_API_SECRET}
+    ports:
+      - '3000:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

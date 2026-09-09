@@ -1,0 +1,61 @@
+- key: governing_law
+  name: Governing law
+  output_type: text
+  question: Which law governs this agreement?
+- key: term
+  name: Initial term
+  output_type: text
+  question: What is the initial term of the agreement?
+- key: termination_for_convenience
+  name: Termination for convenience
+  output_type: boolean
+  question: Can either party terminate the agreement for convenience, without cause?
+- key: liability_cap
+  name: Liability cap
+  output_type: text
+  question: What is the cap on each party's aggregate liability?
+- key: indemnity
+  name: Indemnity
+  output_type: text
+  question: Who indemnifies whom, and for what?
+- key: assignment
+  name: Assignment
+  output_type: boolean
+  question: May a party assign the agreement without the other party's consent?
+- key: change_of_control
+  name: Change of control
+  output_type: boolean
+  question: Does a change of control give either party a right to terminate?
+- key: confidentiality_term
+  name: Confidentiality term
+  output_type: text
+  question: How long do the confidentiality obligations last after termination or
+    expiry?
+- key: non_compete
+  name: Non-compete
+  output_type: boolean
+  question: Is there a non-compete restriction on either party?
+- key: payment_terms
+  name: Payment terms
+  output_type: text
+  question: Within how many days of invoice must payment be made?
+- key: auto_renewal
+  name: Auto-renewal
+  output_type: boolean
+  question: Does the agreement renew automatically after the initial term?
+- key: exclusivity
+  name: Exclusivity
+  output_type: boolean
+  question: Does the agreement contain an exclusivity obligation?
+- key: ip_ownership
+  name: IP ownership
+  output_type: text
+  question: Who owns the intellectual property in the deliverables or platform?
+- key: data_protection
+  name: Data protection
+  output_type: boolean
+  question: Does the agreement contain data protection obligations?
+- key: dispute_resolution
+  name: Dispute resolution
+  output_type: text
+  question: How are disputes resolved (courts, arbitration, expert determination)?

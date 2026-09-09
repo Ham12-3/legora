@@ -1,0 +1,78 @@
+[project]
+name = "legora-api"
+version = "0.1.0"
+description = "Legora API — ingestion, retrieval, and AI orchestration"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "arq>=0.26",
+    "redis>=5.2",
+    "httpx>=0.28",
+    "pyjwt>=2.10",
+    "argon2-cffi>=23.1",
+    "boto3>=1.35",
+    "email-validator>=2.2",
+    "pgvector>=0.3",
+    "pymupdf>=1.25",
+    "python-docx>=1.1",
+    "openai>=1.60",
+    "openpyxl>=3.1",
+    "python-dateutil>=2.9",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "mypy>=1.14",
+    "ruff>=0.9",
+    "boto3-stubs[s3]>=1.35",
+    "types-openpyxl>=3.1",
+    "types-python-dateutil>=2.9",
+    "types-PyYAML>=6.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM", "RUF", "ASYNC"]
+
+[tool.ruff.lint.isort]
+# There is a local ./alembic directory; without this, ruff files the alembic
+# package as first-party.
+known-third-party = ["alembic"]
+known-first-party = ["app"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+disallow_any_explicit = false
+
+[[tool.mypy.overrides]]
+module = ["arq.*", "pgvector.*", "docx", "docx.*"]
+ignore_missing_imports = true
+
+# PyMuPDF ships partial annotations; its Document/Page methods are untyped.
+[[tool.mypy.overrides]]
+module = ["app.ingestion.pdf", "tests.fixtures.build_fixtures"]
+disallow_untyped_calls = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests", "app", "eval"]
+asyncio_mode = "auto"
+addopts = "-ra"

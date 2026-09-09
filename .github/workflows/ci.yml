@@ -1,0 +1,100 @@
+name: CI
+
+# The API suite runs against a real Postgres because the tenancy guarantees
+# live in SQL. No OpenAI key is needed anywhere: the tests use the fake
+# provider, and storage, the queue and OCR are switched off in conftest.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: api — ruff, mypy, pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+
+    services:
+      postgres:
+        # The baseline migration runs CREATE EXTENSION vector, so plain
+        # postgres will not do.
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: legora
+          POSTGRES_PASSWORD: legora
+          POSTGRES_DB: legora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U legora"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - run: uv sync --all-groups --frozen
+
+      - name: ruff
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: mypy
+        run: uv run mypy app eval
+
+      # The suite creates and migrates legora_test on first use. It truncates
+      # shared tables between tests, so it must not be split across parallel
+      # runners.
+      - name: pytest
+        run: uv run pytest -q
+        env:
+          DATABASE_URL: postgresql+asyncpg://legora:legora@localhost:5432/legora_test
+
+  web:
+    name: web — tsc, eslint, vitest, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: types
+        run: pnpm --filter web exec tsc --noEmit
+
+      - name: lint
+        run: pnpm lint:web
+
+      - name: tests
+        run: pnpm --filter web test
+
+      # Placeholders only. lib/server/env.ts throws at import time on a missing
+      # secret, and Next evaluates the module while building. Nothing secret is
+      # baked into the output; the real values arrive from the environment.
+      - name: build
+        run: pnpm --filter web build
+        env:
+          INTERNAL_API_SECRET: ci-build-placeholder-0123456789abcdef
+          AUTH_SECRET: ci-build-placeholder-0123456789abcdef
+          API_BASE_URL: http://localhost:8000

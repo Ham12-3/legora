@@ -1,0 +1,166 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', monospace;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0b0d10;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0d10;
+    --foreground: #f4f5f7;
+    --muted: #9aa2ad;
+    --border: #23272e;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* ---------------------------------------------------------------------------
+ * Landing page.
+ *
+ * Paper, not product chrome: warm off-white, hairline rules, a serif page in
+ * the hero. Scoped to .landing-root so none of it reaches the signed-in app.
+ * Amber appears in exactly two places, and means the same thing in both: the
+ * highlighter on the source sentence, and the bar on an unverified answer.
+ * ------------------------------------------------------------------------- */
+
+.landing-root {
+  --l-bg: #faf9f6;
+  --l-sunk: #f2f0ea;
+  --l-panel: #ffffff;
+  --l-fg: #171614;
+  --l-dim: #5f5c56;
+  --l-rule: #e2ded4;
+  --l-amber: #b8801a;
+
+  color-scheme: light;
+  background: var(--l-bg);
+  color: var(--l-fg);
+}
+
+body:has(.landing-root) {
+  background: #faf9f6;
+}
+
+.landing-width {
+  margin-inline: auto;
+  max-width: 68rem;
+  padding-inline: 1.5rem;
+}
+
+.landing-header {
+  border-bottom: 1px solid var(--l-rule);
+}
+
+/* The hero page sits in a fixed A4-ish frame so the layout does not reflow
+ * while the WebGL context is still starting up. */
+.landing-stage {
+  position: relative;
+  aspect-ratio: 1 / 1.15;
+  width: 100%;
+}
+
+/* The extracted value, pinned to the end of the sentence it came from. The
+ * transform is written every frame from the projected 3D position. */
+.landing-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  border: 1px solid var(--l-rule);
+  border-left: 3px solid var(--l-amber);
+  border-radius: 3px;
+  background: var(--l-panel);
+  box-shadow: 0 6px 20px rgb(23 22 20 / 12%);
+  padding: 0.45rem 0.7rem;
+  pointer-events: none;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.landing-chip-q {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--l-dim);
+}
+
+.landing-chip-a {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.landing-btn,
+.landing-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 5px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.landing-btn {
+  background: var(--l-fg);
+  color: var(--l-bg);
+}
+.landing-btn:hover {
+  background: #000000;
+}
+
+.landing-btn-ghost {
+  border: 1px solid var(--l-rule);
+  color: var(--l-fg);
+}
+.landing-btn-ghost:hover {
+  border-color: #c9c4b6;
+}
+
+.landing-btn-lg {
+  padding: 0.6rem 1.15rem;
+  font-size: 0.9rem;
+}
+
+.landing-panel {
+  border: 1px solid var(--l-rule);
+  background: var(--l-panel);
+}
+
+/* Cells arrive one at a time, the way they do over SSE. */
+.landing-cell {
+  animation: landing-rise 260ms ease-out both;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-cell {
+    animation: none;
+  }
+}
